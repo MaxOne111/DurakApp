@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6c9fb2d474246ddb7740cd5969cefaf, type: 3}
+  m_Name: CardsConfig
+  m_EditorClassIdentifier: 
+  cardPrefabs:
+  - {fileID: -494809178857038036, guid: 8f6eba4adae62684cb84c3c5ac3a20a5, type: 3}
+  - {fileID: 4048705703856343427, guid: d2202bd470210484794a991d241b5d5c, type: 3}
+  - {fileID: 1815432831709006464, guid: 1edee89540dbec3449e08ad04559dd00, type: 3}
+  - {fileID: -4133563715222237100, guid: 628731c061f396b44b0f6961f1b64b00, type: 3}
+  - {fileID: -1544857210465495951, guid: 54718a98bbe87ad4db5fe99837373cef, type: 3}
+  - {fileID: 6187990082597601145, guid: 71741930aae3481459953640c34e12a4, type: 3}
+  - {fileID: -6585151778672858229, guid: d0e5020c06848c242952dd41e9944e01, type: 3}
+  - {fileID: -4908427410338979648, guid: 0fd4fd57e5b9a0e49b4744d74dabd12c, type: 3}
+  - {fileID: 1108240127055126964, guid: 605906db41e67ad41bd17dc25be54bda, type: 3}
+  - {fileID: 3168197439018154185, guid: 79d351b89287f2344ae38e98521d242e, type: 3}
+  - {fileID: 432311861924818536, guid: db04ce7bf0115cc4585c93707a9e85ab, type: 3}
+  - {fileID: -6066716775640057295, guid: c050aa0632e272942aad6193941956c3, type: 3}
+  - {fileID: 7729624494705797995, guid: 1ffcd1f14b765ad4d83f34bdff705921, type: 3}
+  - {fileID: -4384035733455386467, guid: 92baa45ab4a725447b8efcb96a5bd43c, type: 3}
+  - {fileID: 2694666687051722167, guid: 70ee7e6188ab8d443922bb8d73393d26, type: 3}
+  - {fileID: -2418273550170137263, guid: 0bd556279366ce44cb95326c7b8c384a, type: 3}
+  - {fileID: 1343982824852989584, guid: acfc31783852cc74e8b75a864ca86be8, type: 3}
+  - {fileID: -2680795109954151029, guid: 391be3fd26019b747ba537e3293ad817, type: 3}
+  - {fileID: -2091738749894861894, guid: 04f204c2fc5fd9d4a95c6c8ee70b82a1, type: 3}
+  - {fileID: 1561434904441846058, guid: 3feea34a9a3c7cd48a865067b9afbaca, type: 3}
+  - {fileID: -7896184573751861230, guid: e72427403e5537047bcaef287aa2c2a3, type: 3}
+  - {fileID: 7746559492437780955, guid: aca7911356f712640b67a6198ee27703, type: 3}
+  - {fileID: 1864704164282094721, guid: d69617d79de60394ba36b7c2cc9cd759, type: 3}
+  - {fileID: -27977125603229760, guid: a43c9b02fd1c4764e968156f93c26dea, type: 3}
+  - {fileID: -1208258493829307174, guid: eb68ef198fc79a14f80b126e7fe9e301, type: 3}
+  - {fileID: 1320148683155568558, guid: 93873f10513067b418cfa15fddd14a1f, type: 3}
+  - {fileID: 6090224810098776300, guid: 18ae91f6f3d88d94584cdcce3d5ad0ef, type: 3}
+  - {fileID: -7523525044310053082, guid: 30c7e856844dd16489032a3a706e32cd, type: 3}
+  - {fileID: -4808141836445046760, guid: b82ab09502b90f34ebd815b0b0f2257d, type: 3}
+  - {fileID: -4904943057342186718, guid: d801bd19faff8be468421cc27fe94d5a, type: 3}
+  - {fileID: -2868007599385810155, guid: 51ad9f9504f18a34ea9dbd96e98e8a48, type: 3}
+  - {fileID: -7620574341778027772, guid: e522620d78908434dafd74cada77a668, type: 3}
+  - {fileID: -1050045266742097654, guid: c0c56d1ab2ad1bc4e8ce3f19ae1589f6, type: 3}
+  - {fileID: 6104577344462474966, guid: 547ef84f8289b644db0e5581cf586b83, type: 3}
+  - {fileID: -8955524337108769034, guid: d80a5c2ef30a3414dafa62ce71c34c93, type: 3}
+  - {fileID: 4415544012961672934, guid: 0a03627f7d9c83a46934fddf2d1db692, type: 3}
+  trumpSprites:
+  - {fileID: 2127470750, guid: 504ec4c3cae59d748b5e3f5b471edc63, type: 3}
+  - {fileID: 1649561675, guid: 504ec4c3cae59d748b5e3f5b471edc63, type: 3}
+  - {fileID: 1545197652, guid: 504ec4c3cae59d748b5e3f5b471edc63, type: 3}
+  - {fileID: 1364361473, guid: 504ec4c3cae59d748b5e3f5b471edc63, type: 3}
