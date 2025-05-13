@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Game.Durak.Core;
-using Game.Max;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
@@ -26,11 +25,7 @@ public class DurakSceneInstaller : MonoInstaller
     
     
     [Header("Services/Configs")]
-    
-    [SerializeField] private DurakGameUI durakGameUI;
 
-    [SerializeField] private DurakGameSounds gameSounds;
-        
     [SerializeField] private ResponseTextMessageRepository responseTextMessageRepository;
     
     [SerializeField] private CardsConfig cardsConfig;
@@ -53,6 +48,7 @@ public class DurakSceneInstaller : MonoInstaller
         InstallPlayer();
         InstallPlayerList();
         InstallServices();
+        InstallResponses();
     }
 
     private void InstallPlayer()
@@ -75,30 +71,35 @@ public class DurakSceneInstaller : MonoInstaller
         Container.Bind<Transform>().WithId(SceneInstallerIdentifiers.BeatPosition).FromInstance(beatPosition)
             .AsCached();
 
-        Container.Bind<GameObject>().FromInstance(deck).AsCached();
+        Container.Bind<GameObject>().FromInstance(deck).AsSingle();
 
-        Container.Bind<EnemyPosition[]>().FromInstance(placesOnTable).AsCached();
+        Container.Bind<EnemyPosition[]>().FromInstance(placesOnTable).AsSingle();
 
         Container.Bind<Transform>().WithId(SceneInstallerIdentifiers.SlotContainer).FromInstance(slotContainer)
             .AsCached();
 
-        Container.Bind<Image>().FromInstance(trumpImage).AsCached();
+        Container.Bind<Image>().FromInstance(trumpImage).AsSingle();
 
         Container.BindInstance(slotPrefab);
     }
 
     private void InstallServices()
     {
-        Container.Bind<DurakGameUI>().FromComponentInHierarchy().AsCached();
+        Container.Bind<DurakGameUI>().FromComponentInHierarchy().AsSingle();
 
-        Container.Bind<DurakGameSounds>().FromComponentInHierarchy().AsCached();
+        Container.Bind<DurakGameSounds>().FromComponentInHierarchy().AsSingle();
 
         Container.Bind<ResponseTextMessageRepository>().FromInstance(responseTextMessageRepository)
             .AsCached();
 
-        Container.Bind<CardsConfig>().FromInstance(cardsConfig).AsCached();
+        Container.Bind<CardsConfig>().FromInstance(cardsConfig).AsSingle();
 
-        Container.Bind<GameLogicMethods>().FromInstance(_gameLogic).AsCached();
+        Container.Bind<GameLogicMethods>().FromInstance(_gameLogic).AsSingle();
+    }
+
+    private void InstallResponses()
+    {
+        Container.Bind<IAttackResponse>().To<AttackResponseLogic>().AsSingle();
     }
 }
 

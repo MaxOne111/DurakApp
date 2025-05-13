@@ -61,6 +61,8 @@ namespace Game.Max
 
         private PingReply _reply;
 
+        private IAttackResponse _attackResponse;
+
         private static event Action<CardInfo, GameObject> _playerAttackMove; 
         private static event Action<CardInfo, TestSlot> _playerDefenceMove; 
         private static event Action<CardInfo, TestSlot> _playerTransferMove;
@@ -99,7 +101,7 @@ namespace Game.Max
         private int _playerSlot;
 
         private int _connectionAttempt = 0;
-
+        
 
         [Inject]
         private void SceneConstruct(
@@ -148,6 +150,12 @@ namespace Game.Max
             _gameSounds = durakGameSounds;
             _responseTextMessageRepository = messageRepository;
             _cardsConfig = cardsConfig;
+        }
+
+        [Inject]
+        private void ResponsesConstruct(IAttackResponse attackResponse)
+        {
+            _attackResponse = attackResponse;
         }
         
         private void OnEnable()
@@ -229,7 +237,7 @@ namespace Game.Max
                 { ETurnMode.Ready, ReadyResponse },
                 { ETurnMode.StartDistribution, GameStartedResponse },
                 { ETurnMode.Role, RoleResponse },
-                { ETurnMode.Attack, AttackResponse },
+                { ETurnMode.Attack, _attackResponse.Invoke },
                 { ETurnMode.Defence, DefenseResponse },
                 { ETurnMode.Take, TakeResponse },
                 { ETurnMode.Beat, BeatResponse },
@@ -449,68 +457,6 @@ namespace Game.Max
 
         }
         
-        private void AttackResponse(string response)
-        {
-            AttackResponse attackResponse = JsonConvert.DeserializeObject<AttackResponse>(response);
-
-            TestCard card;
-
-            TestSlot slot = Instantiate(_slotPrefab, _slotContainer.transform.position, Quaternion.identity, _slotContainer);
-
-            int currentInit = attackResponse.Slots[^1].init;
-            int currentEnemy = attackResponse.Slots[^1].enemy;
-            
-            slot.Initialize(attackResponse.Slots[^1]);
-            slot.SlotInfo.index = attackResponse.Slots.Length - 1;
-            
-            TestPlayer init = DurakHelper.GetPlayer(_playersOnScene, currentInit);
-
-            if (_player.PlayerInfo.user_id == currentInit)
-            {
-                card = _player.GetCard(attackResponse.Slots[^1].init_card);
-                
-                _player.RemoveCard(card);
-                
-                _durakGameUI.DisableButton(_durakGameUI.Beat);
-                
-            }
-            else if (_player.PlayerInfo.user_id == currentEnemy)
-            {
-                card = SpawnCard(attackResponse.Slots[^1].init_card, init.transform);
-
-                card.transform.localScale = new Vector3(0.5f, 0.5f);
-
-                if (attackResponse.Status != EAttackStatus.Pending_Take)
-                    _durakGameUI.SwitchButton(_durakGameUI.Take);
-            }
-            else
-            {
-                if (_player.Role == EPlayerRole.Enemy)//first slot without enemy
-                {
-                    if (attackResponse.Status != EAttackStatus.Pending_Take)
-                        CheckTake(attackResponse.Slots);
-                }
-                
-                card = SpawnCard(attackResponse.Slots[^1].init_card, init.transform);
-                card.transform.localScale = new Vector3(0.5f, 0.5f);
-            }
-
-            ShowPlayersCardCount(attackResponse.Players);
-            
-            Debug.Log($"Refreshing cards amount");
-
-            card.transform.SetParent(slot.transform);
-
-            MoveCardTo(card, Vector3.zero);
-            SetCardScale(card, Vector3.one);
-            slot.ApplySize();
-
-            _gameSounds.PlayCardMove();
-            
-            _slots.Add(slot);
-
-            _cardsOnScene.Add(card);
-        }
         
         private void DefenseResponse(string response)
         {
