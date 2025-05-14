@@ -3856,8 +3856,6 @@ MonoBehaviour:
     <Transform>k__BackingField: {fileID: 1062634912}
   slotContainer: {fileID: 1163897945}
   trumpImage: {fileID: 599649743}
-  durakGameUI: {fileID: 1196884423}
-  gameSounds: {fileID: 578564435}
   responseTextMessageRepository: {fileID: 11400000, guid: 4546f02e68d992c44beb67305202b6d6, type: 2}
   cardsConfig: {fileID: 11400000, guid: 020fa4a3026835243b9c28c263cd0241, type: 2}
   playerPrefab: {fileID: 1027336354074721598, guid: 65fa16ba8edef434c824e21d9110d39a, type: 3}
