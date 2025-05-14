@@ -10,6 +10,7 @@ using DG.Tweening;
 using Game.Durak;
 using Game.Durak.Core;
 using Game.Durak.Enums;
+using Game.Durak.Main;
 using Game.Durak.Network.Messages;
 using Game.Durak.Network.Responses;
 using Newtonsoft.Json;
@@ -48,6 +49,8 @@ namespace Game.Max
         private DurakGameUI _durakGameUI;
 
         private DurakGameSounds _gameSounds;
+
+        private GameLogicMethods _gameLogicMethods;
         
         private ResponseTextMessageRepository _responseTextMessageRepository;
 
@@ -62,6 +65,7 @@ namespace Game.Max
         private PingReply _reply;
 
         private IAttackResponse _attackResponse;
+        private DefenceResponseLogic _defenceResponse;
 
         private static event Action<CardInfo, GameObject> _playerAttackMove; 
         private static event Action<CardInfo, TestSlot> _playerDefenceMove; 
@@ -95,10 +99,6 @@ namespace Game.Max
         
         private bool _isReady;
         private bool _inGame;
-
-        private Transform _slotTransform;
-        
-        private int _playerSlot;
 
         private int _connectionAttempt = 0;
         
@@ -144,18 +144,23 @@ namespace Game.Max
         private void ServicesConstruct(DurakGameUI durakGameUI,
             DurakGameSounds durakGameSounds,
             ResponseTextMessageRepository messageRepository,
-            CardsConfig cardsConfig)
+            CardsConfig cardsConfig,
+            GameLogicMethods gameLogicMethods)
         {
             _durakGameUI = durakGameUI;
             _gameSounds = durakGameSounds;
             _responseTextMessageRepository = messageRepository;
             _cardsConfig = cardsConfig;
+            _gameLogicMethods = gameLogicMethods;
         }
 
         [Inject]
-        private void ResponsesConstruct(IAttackResponse attackResponse)
+        private void ResponsesConstruct(
+            IAttackResponse attackResponse,
+            DefenceResponseLogic defenceResponse)
         {
             _attackResponse = attackResponse;
+            _defenceResponse = defenceResponse;
         }
         
         private void OnEnable()
@@ -231,6 +236,7 @@ namespace Game.Max
 
         private void InitializeResponses()
         {
+            
             _responses = new Dictionary<ETurnMode, Action<string>>()
             {
                 { ETurnMode.Join, JoinResponse },
@@ -238,7 +244,7 @@ namespace Game.Max
                 { ETurnMode.StartDistribution, GameStartedResponse },
                 { ETurnMode.Role, RoleResponse },
                 { ETurnMode.Attack, _attackResponse.Invoke },
-                { ETurnMode.Defence, DefenseResponse },
+                { ETurnMode.Defence, _defenceResponse.Invoke },
                 { ETurnMode.Take, TakeResponse },
                 { ETurnMode.Beat, BeatResponse },
                 { ETurnMode.Info, InfoResponse },
@@ -457,67 +463,6 @@ namespace Game.Max
 
         }
         
-        
-        private void DefenseResponse(string response)
-        {
-            DefenseResponse defenseResponse = JsonConvert.DeserializeObject<DefenseResponse>(response);
-
-            TestCard card;
-
-            int slotNumber = defenseResponse.SlotNumber;
-
-            int currentInit = defenseResponse.Slots[slotNumber].init;
-            int currentEnemy = defenseResponse.Slots[slotNumber].enemy;
-            
-            TestPlayer enemy = DurakHelper.GetPlayer(_playersOnScene, currentEnemy);
-
-            if (_player.PlayerInfo.user_id == currentInit)//You are init
-            {
-
-                card = SpawnCard(defenseResponse.Slots[slotNumber].enemy_card, enemy.transform);
-
-                var slot = _slots[slotNumber];
-                card.transform.SetParent(slot.transform);
-                SetCardScale(card, Vector3.one);
-                slot.ApplySize();
-                
-                CheckBeat(defenseResponse.Slots);
-
-            }
-            else if (_player.PlayerInfo.user_id == currentEnemy)//You are enemy
-            {
-                card = _player.GetCard(defenseResponse.Slots[_playerSlot].enemy_card);
-
-                card.transform.SetParent(_slotTransform);
-
-                _player.RemoveCard(card);
-                
-                CheckTake(defenseResponse.Slots);
-            }
-            else
-            {
-                card = SpawnCard(defenseResponse.Slots[slotNumber].enemy_card, enemy.transform);
-                
-                card.transform.localScale = new Vector3(0.5f, 0.5f);
-                
-                card.transform.SetParent(_slots[slotNumber].transform);
-            }
-
-            ShowPlayersCardCount(defenseResponse.Players);
-            
-            Debug.Log($"Refreshing cards amount");
-
-            MoveCardTo(card, Vector3.zero);
-            
-            SetCardScale(card, Vector3.one);
-
-            _gameSounds.PlayCardMove();
-            
-            card.RotateCard();
-
-            _cardsOnScene.Add(card);
-        }
-
         private void BeatResponse(string response)
         {
             BeatResponse beatResponse = JsonConvert.DeserializeObject<BeatResponse>(response);
@@ -1099,9 +1044,9 @@ namespace Game.Max
             
             DefenseMessage defenceMessage = new DefenseMessage(_playerInfo, cardInfo, slot.SlotInfo.index);
 
-            _slotTransform = slot.transform;
+            SceneDefenceSlot.SetDefenceSlot(slot.transform);
 
-            _playerSlot = slot.SlotInfo.index;
+            ScenePlayerSlotNumber.SetPlayerSlot(slot.SlotInfo.index);
             
             SendToServer(defenceMessage);
         }

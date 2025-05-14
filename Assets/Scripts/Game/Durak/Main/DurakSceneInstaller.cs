@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Game.Durak.Core;
+using Game.Durak.Main;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
@@ -39,8 +40,7 @@ public class DurakSceneInstaller : MonoInstaller
     
 
     private List<TestPlayer> _playersOnScene = new List<TestPlayer>();
-
-    private GameLogicMethods _gameLogic = new GameLogicMethods();
+    
 
     public override void InstallBindings()
     {
@@ -61,7 +61,7 @@ public class DurakSceneInstaller : MonoInstaller
     
     private void InstallPlayerList()
     {
-        Container.Bind<List<TestPlayer>>().FromInstance(_playersOnScene).AsSingle();
+        Container.Bind<List<TestPlayer>>().WithId(SceneInstallerIdentifiers.PlayersOnScene).FromInstance(_playersOnScene).AsSingle();
     }
     
     private void InstallScene()
@@ -94,12 +94,13 @@ public class DurakSceneInstaller : MonoInstaller
 
         Container.Bind<CardsConfig>().FromInstance(cardsConfig).AsSingle();
 
-        Container.Bind<GameLogicMethods>().FromInstance(_gameLogic).AsSingle();
+        Container.Bind<GameLogicMethods>().ToSelf().AsSingle();
     }
 
     private void InstallResponses()
     {
         Container.Bind<IAttackResponse>().To<AttackResponseLogic>().AsSingle();
+        Container.Bind<DefenceResponseLogic>().ToSelf().AsSingle();
     }
 }
 
@@ -110,4 +111,5 @@ public enum SceneInstallerIdentifiers
     TrumpPosition,
     BeatPosition,
     SlotContainer,
+    PlayersOnScene,
 }
