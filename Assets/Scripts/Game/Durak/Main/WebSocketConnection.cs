@@ -31,9 +31,7 @@ namespace Game.Max
         private Transform _playerSleeve;
         
         private Transform _trumpPosition;
-        
-        private Transform _beatPosition;
-        
+
         private EnemyPosition[] _placesOnTable;
         
         private Transform _slotContainer;
@@ -43,8 +41,6 @@ namespace Game.Max
         private TestPlayer _playerPrefab;
 
         private CardsConfig _cardsConfig;
-
-        private Image _trumpImage;
 
         private DurakGameUI _durakGameUI;
 
@@ -107,21 +103,13 @@ namespace Game.Max
         private void SceneConstruct(
             [Inject(Id = SceneInstallerIdentifiers.TrumpPosition)]
             Transform trumpPosition,
-            [Inject(Id = SceneInstallerIdentifiers.BeatPosition)]
-            Transform beatPosition,
             GameObject deck,
             EnemyPosition[] placeOnTable,
-            [Inject(Id = SceneInstallerIdentifiers.SlotContainer)]
-            Transform slotContainer,
-            Image trumpImage,
             TestSlot slotPrefab)
         {
             _trumpPosition = trumpPosition;
-            _beatPosition = beatPosition;
             _deck = deck;
             _placesOnTable = placeOnTable;
-            _slotContainer = slotContainer;
-            _trumpImage = trumpImage;
             _slotPrefab = slotPrefab;
         }
 
@@ -439,7 +427,7 @@ namespace Game.Max
         {
             GameStartedResponse startedResponse = JsonConvert.DeserializeObject<GameStartedResponse>(response);
 
-            SpawnSleeve(startedResponse, startedResponse.trump, 0.5f, 100);
+            _gameLogicMethods.SpawnSleeve(startedResponse, 0.5f, 100);
             
             ShowPlayersCardCount(startedResponse?.players);
             
@@ -477,7 +465,7 @@ namespace Game.Max
                     if (_player.HaveCard(beatResponse.cards[i]))
                         continue;
 
-                    TestCard newCard = SpawnCard(beatResponse.cards[i], _deck.transform.position, Quaternion.identity,
+                    TestCard newCard = _gameLogicMethods.SpawnCard(beatResponse.cards[i], _deck.transform.position, Quaternion.identity,
                         _playerSleeve);
 
                     _player.AddCard(newCard);
@@ -493,7 +481,7 @@ namespace Game.Max
 
             Debug.Log($"Refreshing cards amount");
 
-            MoveCardsToSleeve(_player.SleeveCount, 0.5f, 50, null);
+            _gameLogicMethods.MoveCardsToSleeve(_player.SleeveCount, 0.5f, 50, null);
 
             _player.UnlockSleeve();
             
@@ -523,7 +511,7 @@ namespace Game.Max
                     _durakGameUI.DisableButton(_durakGameUI.Take);
                 }
                 else
-                    newCard = SpawnCard(takeResponse.cards[i], _deck.transform.position, Quaternion.identity,
+                    newCard = _gameLogicMethods.SpawnCard(takeResponse.cards[i], _deck.transform.position, Quaternion.identity,
                         _playerSleeve);
 
                 _player.AddCard(newCard);
@@ -535,7 +523,7 @@ namespace Game.Max
             
             _gameSounds.PlayTakeCard();
 
-            MoveCardsToSleeve(_player.SleeveCount, 0.5f, 0);
+            _gameLogicMethods.MoveCardsToSleeve(_player.SleeveCount, 0.5f, 0);
             
             _player.UnlockSleeve();
         }
@@ -618,7 +606,7 @@ namespace Game.Max
             switch (infoResponse?.Info)
             {
                 case ELogicInfo.DeckSize:
-                    CheckDeck(int.Parse(infoResponse.value));
+                    _gameLogicMethods.CheckDeck(int.Parse(infoResponse.value));
                     
                     break;
 
@@ -635,7 +623,7 @@ namespace Game.Max
                     Debug.Log($"Defender took the cards: {infoResponse.user.username}");
                     
                     if (!DurakHelper.IsPlayer(_player, infoResponse.user))
-                        MoveCardsToEnemy(infoResponse.user);
+                        _gameLogicMethods.MoveCardsToEnemy(infoResponse.user);
                     
                     break;
                 
@@ -685,12 +673,12 @@ namespace Game.Max
                 case ELogicInfo.NewRound:
 
                     if (infoResponse.action is ETurnMode.Beat)
-                        MoveCardsToBeat();
+                        _gameLogicMethods.MoveCardsToBeat();
 
                     for (int i = 0; i < _playersOnScene.Count; i++)
                         _playersOnScene[i].HideActionMessage();
                     
-                    CleanDeck();
+                    _gameLogicMethods.CleanDeck();
                     break;
                 
                 case ELogicInfo.UserLogOut:
@@ -856,12 +844,12 @@ namespace Game.Max
 
             _durakGameUI.ChangeRoleImage(_player.Role);
             
-            SpawnSleeve(reconnectResponse.hand, reconnectResponse.trump, 0, 0);
+            _gameLogicMethods.SpawnSleeve(reconnectResponse.hand, 0, 0);
             
             _durakGameUI.ShowLobbyID(SceneMediator.Room.ID);
             _durakGameUI.ShowLobbyBet(SceneMediator.Room.Bank);
             
-            CheckDeck(reconnectResponse.deck);
+            _gameLogicMethods.CheckDeck(reconnectResponse.deck);
             
             for (int i = 0; i < reconnectResponse.round.slots.Length; i++)
             {
@@ -875,14 +863,14 @@ namespace Game.Max
                 
                 _slots.Add(slot);
                 
-                TestCard intiCard = SpawnCard(reconnectResponse.round.slots[i].init_card, slot.transform);
+                TestCard intiCard = _gameLogicMethods.SpawnCard(reconnectResponse.round.slots[i].init_card, slot.transform);
 
                 _cardsOnScene.Add(intiCard);
                 
                 if (reconnectResponse.round.slots[i].enemy_card == null)
                     continue;
                 
-                TestCard enemyCard = SpawnCard(reconnectResponse.round.slots[i].enemy_card, slot.transform);
+                TestCard enemyCard = _gameLogicMethods.SpawnCard(reconnectResponse.round.slots[i].enemy_card, slot.transform);
                 
                 _cardsOnScene.Add(enemyCard);
                 
@@ -916,7 +904,7 @@ namespace Game.Max
                 
                 _slots.Add(slot);
                 
-                TestCard initCard = SpawnCard(watchResponse.round.slots[i].init_card, slot.transform);
+                TestCard initCard = _gameLogicMethods.SpawnCard(watchResponse.round.slots[i].init_card, slot.transform);
                 var initSize = ((RectTransform)slot.transform).sizeDelta / ((RectTransform)initCard.transform).sizeDelta;
                 SetCardScale(initCard, initSize);
 
@@ -925,7 +913,7 @@ namespace Game.Max
                 if (watchResponse.round.slots[i].enemy_card == null)
                     continue;
                 
-                TestCard enemyCard = SpawnCard(watchResponse.round.slots[i].enemy_card, slot.transform);
+                TestCard enemyCard = _gameLogicMethods.SpawnCard(watchResponse.round.slots[i].enemy_card, slot.transform);
                 var enemySize = ((RectTransform)slot.transform).sizeDelta / ((RectTransform)enemyCard.transform).sizeDelta;
                 SetCardScale(enemyCard, enemySize);
                 
@@ -934,7 +922,7 @@ namespace Game.Max
                 enemyCard.RotateCard();
             }
             
-            CheckDeck(watchResponse.deck);
+            _gameLogicMethods.CheckDeck(watchResponse.deck);
             
         }
         
@@ -1366,127 +1354,12 @@ namespace Game.Max
 
             #endregion
         }
-
         
-        
-        private void SpawnSleeve(GameStartedResponse startedResponse, CardInfo trump, float duration, int delay)
-        {
-            if (startedResponse.cards.Length == 0)
-                return;
-
-            _trump = Instantiate(_cardsConfig.GetCard(trump), _trumpPosition);
-
-            ((RectTransform) _trump.transform).sizeDelta = ((RectTransform) _trumpPosition.transform).sizeDelta;
-            
-            _trumpSuit = _trump.CardInfo.suit;
-            
-            Sprite trumpSprite = _cardsConfig.GetTrump(_trumpSuit);
-            
-            _trumpImage.sprite = trumpSprite;
-            _trumpImage.gameObject.SetActive(true);
-            
-            _durakGameUI.SetTrumpSuit(_trumpSuit);
-
-            for (int i = 0; i < startedResponse.cards.Length; i++)
-            {
-                TestCard card = SpawnCard(startedResponse.cards[i], _deck.transform.position, Quaternion.identity,
-                    _playerSleeve);
-                
-                _gameSounds.PlayDistribution();
-                
-                _player.AddCard(card);
-            }
-
-            MoveCardsToSleeve(_player.SleeveCount, duration, delay, _gameSounds.PlayDistribution);
-            
-            _player.UnlockSleeve();
-        }
-        
-        private void MoveCardsToSleeve(int sleeveCount, float duration, int delay, Action playSound = null, Action callback = null)
-        {
-            playSound ??= () => { };
-            callback ??= () => { };
-
-            Vector3[] points = BezierCurve.GetSleeveCurve(p0, p1, p2, p3, sleeveCount);
-            
-            _player.MoveCardsToSleeve(points, duration, delay, playSound, callback);
-        }
-        
-
-        private TestCard SpawnCard(CardInfo info, Transform parent)
-        {
-            TestCard card = Instantiate(_cardsConfig.GetCard(info), parent);
-            
-            DurakHelper.CheckTrump(_trumpSuit, card);
-
-            return card;
-        }
-        
-        private TestCard SpawnCard(CardInfo info, Vector3 position, Quaternion rotation, Transform parent)
-        {
-            TestCard card = Instantiate(_cardsConfig.GetCard(info), position, rotation, parent);
-            
-            DurakHelper.CheckTrump(_trumpSuit, card);
-
-            return card;
-        }
-        
-        private void MoveCardTo(TestCard card, Vector3 position)
-        {
-            if (card == null)
-                return;
-
-            card.transform.DOLocalMove(position, 0.5f)
-                .SetLink(card.gameObject)
-                .SetEase(Ease.OutQuad);
-            
-            card.transform.SetAsLastSibling();
-        }
 
         private void SetCardScale(TestCard card, Vector3 scale)
         {
             card.transform.DOScale(scale, 0.5f)
                 .SetLink(card.gameObject);
-        }
-        
-        private void CheckDeck(int count)
-        {
-            _durakGameUI.ShowCardsCount(count);
-
-            DebugMethod("CheckDeck");
-            
-            if (count <= 1)
-            {
-                _deck.SetActive(false);
-                Debug.Log("Disable deck");
-            }
-            else
-            {
-                _deck.SetActive(true);
-                _trumpPosition.gameObject.SetActive(true);
-            }
-
-            if (count <= 0 && _trump)
-            {
-                Destroy(_trump.gameObject);
-                _trumpPosition.gameObject.SetActive(false);
-            }
-            
-        }
-
-        private void CleanDeck()
-        {
-            for (int i = 0; i < _slots.Count; i++)
-                Destroy(_slots[i].gameObject);
-
-            _cardsOnScene.Clear();
-            _slots.Clear();
-        }
-
-        private void CleanBeat()
-        {
-            for (int i = 0; i < _beatPosition.childCount; i++)
-                Destroy(_beatPosition.GetChild(i).gameObject);
         }
 
         private void CheckPlayerStatusAfterReconnect(ReconnectResponse reconnectResponse)
@@ -1503,13 +1376,13 @@ namespace Game.Max
                             return;
                         }
                             
-                        CheckBeat(reconnectResponse.round.slots);
+                        _gameLogicMethods.CheckBeat(reconnectResponse.round.slots);
                     }
                     
                     break;
                     
                 case EPlayerRole.Enemy:
-                    CheckTake(reconnectResponse.round.slots);
+                    _gameLogicMethods.CheckTake(reconnectResponse.round.slots);
                             
                     break;
                 
@@ -1526,79 +1399,7 @@ namespace Game.Max
                     
             }
         }
-        
-        private void MoveCardsToEnemy(PlayerInfo player)
-        {
-            Debug.Log($"MoveCardsToEnemy: {player.username}");
 
-            var playerView = DurakHelper.GetPlayer(_playersOnScene, player);
-            var parent = playerView.transform;
-            
-            for (int i = 0; i < _cardsOnScene.Count; i++)
-            {
-                var card = _cardsOnScene[i];
-                
-                card.FaceDown();
-                
-                card.transform.SetParent(parent.parent);
-
-                card.transform
-                    .DOLocalMove(parent.localPosition, 0.25f).SetLink(card.gameObject)
-                    .OnComplete(() =>
-                    {
-                        card.transform.DOScale(new Vector3(0, 0), 0.25f).SetLink(card.gameObject);
-
-                        // playerView.HideActionMessage();
-
-                    });
-            }
-        }
-
-        private void MoveCardsToBeat()
-        {
-            Debug.Log($"MoveCardsToBeat");
-            
-            float[] angles = { -45, 45 };
-            
-            for (int i = 0; i < _cardsOnScene.Count; i++)
-            {
-                int index = Random.Range(0, angles.Length);
-                
-                _cardsOnScene[i].FaceDown();
-                
-                _cardsOnScene[i].transform.SetParent(_beatPosition);
-                _cardsOnScene[i].transform.DOScale(Vector2.one, 0.25f).SetLink(_cardsOnScene[i].gameObject);
-                _cardsOnScene[i].transform.DOLocalMove(Vector3.zero, 0.25f).SetLink(_cardsOnScene[i].gameObject);
-                _cardsOnScene[i].transform.DORotate(new Vector3(0, 0, angles[index]), 0.25f).SetLink(_cardsOnScene[i].gameObject);
-            }
-        }
-
-        private void CheckBeat(SlotInfo[] slots)
-        {
-            for (int i = 0; i < slots.Length; i++)
-            {
-                if (slots[i].status == false)
-                    break;
-                    
-                if (i == slots.Length - 1 && _player.SleeveCount > 0)
-                    _durakGameUI.SwitchButton(_durakGameUI.Beat);
-            }
-        }
-
-        private void CheckTake(SlotInfo[] slots)
-        {
-            for (int i = 0; i < slots.Length; i++)
-            {
-                if (slots[i].status == false)
-                {
-                    _durakGameUI.SwitchButton(_durakGameUI.Take);
-                    return;
-                }
-                    
-                _durakGameUI.DisableButtons();
-            }
-        }
-        
         private void SetRoleFrames(PlayerInfo[] users)
         {
             for (int i = 0; i < _playersOnScene.Count; i++)
@@ -1684,8 +1485,8 @@ namespace Game.Max
                 
                 _player.DeleteCards();
                 
-                CleanDeck();
-                CleanBeat();
+                _gameLogicMethods.CleanDeck();
+                _gameLogicMethods.CleanBeat();
                 
             }
             catch (Exception e)
@@ -1730,8 +1531,8 @@ namespace Game.Max
             if(_player)
                 _player.DeleteCards();
             
-            CleanDeck();
-            CleanBeat();
+            _gameLogicMethods.CleanDeck();
+            _gameLogicMethods.CleanBeat();
             ClearPlayers();
             GameEvents.LobbyCleared();
             if (_trump)
