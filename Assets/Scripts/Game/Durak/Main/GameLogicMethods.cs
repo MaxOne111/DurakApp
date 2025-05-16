@@ -42,6 +42,10 @@ public class GameLogicMethods
 
     private List<TestCard> _cardsOnScene;
 
+    private TestPlayer _playerPrefab;
+
+    private EnemyPosition[] _placesOnTable;
+
     private Transform p0;
     private Transform p1;
     private Transform p2;
@@ -64,7 +68,9 @@ public class GameLogicMethods
         DurakGameUI durakGameUI,
         DurakGameSounds gameSounds,
         List<TestCard> cardsOnScene,
-        GameObject deck
+        GameObject deck,
+        TestPlayer playerPrefab,
+        EnemyPosition[] placesOnTable
     )
     {
         _trumpPosition = trumpPosition;
@@ -78,6 +84,8 @@ public class GameLogicMethods
         _gameSounds = gameSounds;
         _cardsOnScene = cardsOnScene;
         _deck = deck;
+        _playerPrefab = playerPrefab;
+        _placesOnTable = placesOnTable;
     }
 
     public void SpawnSleeve(GameStartedResponse startedResponse, float duration, int delay)
@@ -290,6 +298,258 @@ public class GameLogicMethods
             _cardsOnScene[i].transform.DORotate(new Vector3(0, 0, angles[index]), 0.25f).SetLink(_cardsOnScene[i].gameObject);
         }
     }
+    
+    
+     public void CreatePlayers(int count, bool isPlayerIncluded = true)
+        {
+            if (_playersOnScene.Count > 0)
+                return;
+
+            PlayerInfo playerInfo = SceneMediator.GetPlayerInfo();
+            
+            var positions = new EnemyPosition[count];
+            
+            positions[0] = _placesOnTable[0]; //Player place
+            
+            switch (count)
+            {
+                case 2: positions[1] = _placesOnTable[3];
+                    break;
+                case 3: positions[1] = _placesOnTable[2];
+                        positions[2] = _placesOnTable[4];
+                    break;
+                case 4: positions[1] = _placesOnTable[2];
+                        positions[2] = _placesOnTable[3];
+                        positions[3] = _placesOnTable[4];
+                    break;
+                case 5: positions[1] = _placesOnTable[1];
+                        positions[2] = _placesOnTable[2];
+                        positions[3] = _placesOnTable[4];
+                        positions[4] = _placesOnTable[5];
+                    break;
+                case 6: positions[1] = _placesOnTable[1];
+                        positions[2] = _placesOnTable[2];
+                        positions[3] = _placesOnTable[3];
+                        positions[4] = _placesOnTable[4];
+                        positions[5] = _placesOnTable[5];
+                    break;
+            }
+            
+            TestPlayer player = Object.Instantiate(_playerPrefab, positions[0].Transform);
+            player.Initialize(playerInfo.username, playerInfo.user_id, playerInfo.balance);
+            player.ShowDefaultBetHolder(playerInfo.balance.ToString());
+            player.SetFlagPosition(EFlagPosition.Left);
+            player.SetCardsCountIndicatorEnabled(false);
+
+            //var country = new IpCountryProvider().GetCountry();
+            //player.SetCountry(country);
+            
+            _player = player;
+            
+            _playersOnScene.Add(player);
+
+            if (!isPlayerIncluded)
+                _player.gameObject.SetActive(false);
+
+            int startIndex;
+
+            if (isPlayerIncluded)
+                startIndex = 1;
+            else
+                startIndex = 0;
+
+            for (int i = startIndex; i < positions.Length; i++)
+            {
+                TestPlayer enemy = Object.Instantiate(_playerPrefab, positions[i].Transform);
+                enemy.SetFlagPosition(EFlagPosition.Left);
+                enemy.HideBetHolder();
+                //enemy.SetFlagPosition(positions[i].FlagPosition);
+                //enemy.SetCountry(ECountry.Unknown);
+                //enemy.SetAvatar(enemyAvatar);
+                
+                _playersOnScene.Add(enemy);
+            }
+        }
+     
+      public void InitializePlayers(PlayerInfo[] players)
+        {
+            List<PlayerInfo> playersInfo = new List<PlayerInfo>(players.Length);
+            List<PlayerInfo> enemiesAfterPlayer = new List<PlayerInfo>(players.Length);
+            List<PlayerInfo> enemiesBeforePlayer = new List<PlayerInfo>(players.Length);
+            
+            bool playerFound = false;
+            
+            PlayerInfo playerInfo = SceneMediator.GetPlayerInfo();
+
+            for (int i = 0; i < players.Length; i++)
+            {
+                if (players[i].user_id == 0)
+                    continue;
+                
+                playersInfo.Add(players[i]);
+            }
+            
+            for (int i = 0; i < playersInfo.Count; i++)
+            {
+                if (playersInfo[i].user_id == playerInfo.user_id)
+                {
+                    playerFound = true;
+                    continue;
+                }
+                
+                if (playerFound)
+                    enemiesAfterPlayer.Add(playersInfo[i]);
+                else
+                    enemiesBeforePlayer.Add(playersInfo[i]);
+                
+            }
+            
+            InitializeEnemiesBeforePlayer();
+            InitializeEnemiesAfterPlayer();
+            
+
+            #region InitializeEnemies
+
+            void InitializeEnemiesBeforePlayer()
+            {
+                int last = _playersOnScene.Count - 1;
+                
+                while (enemiesBeforePlayer.Count > 0)
+                {
+                    if (_playersOnScene[last].PlayerInfo != null)
+                    {
+                        if (_playersOnScene[last].PlayerInfo.user_id == playerInfo.user_id)
+                        {
+                            last--;
+                            continue;
+                        }
+                    }
+                    
+                    _playersOnScene[last].Initialize(enemiesBeforePlayer[^1].username, enemiesBeforePlayer[^1].user_id, enemiesBeforePlayer[^1].balance);
+
+                    enemiesBeforePlayer.Remove(enemiesBeforePlayer[^1]);
+
+                    last--;
+                }
+            }
+            
+            
+            void InitializeEnemiesAfterPlayer()
+            {
+                int first = 0;
+                
+                while (enemiesAfterPlayer.Count > 0)
+                {
+                    if (_playersOnScene[first].PlayerInfo != null)
+                    {
+                        if (_playersOnScene[first].PlayerInfo.user_id == playerInfo.user_id)
+                        {
+                            first++;
+                            continue;
+                        }
+                    }
+                
+                    _playersOnScene[first].Initialize(enemiesAfterPlayer[0].username, enemiesAfterPlayer[0].user_id, enemiesAfterPlayer[0].balance);
+
+                    enemiesAfterPlayer.Remove(enemiesAfterPlayer[0]);
+
+                    first++;
+                }
+            }
+
+            #endregion
+        }
+      
+      
+      public void InitializePlayers(PlayerCardInfo[] players)
+        {
+            List<PlayerInfo> playersInfo = new List<PlayerInfo>(players.Length);
+            List<PlayerInfo> enemiesAfterPlayer = new List<PlayerInfo>(players.Length);
+            List<PlayerInfo> enemiesBeforePlayer = new List<PlayerInfo>(players.Length);
+            
+            bool playerFound = false;
+            
+            PlayerInfo playerInfo = SceneMediator.GetPlayerInfo();
+
+            for (int i = 0; i < players.Length; i++)
+            {
+                if (players[i].user.user_id == 0)
+                    continue;
+                
+                playersInfo.Add(players[i].user);
+            }
+
+            for (int i = 0; i < playersInfo.Count; i++)
+            {
+                if (playersInfo[i].user_id == playerInfo.user_id)
+                {
+                    playerFound = true;
+                    continue;
+                }
+                
+                if (playerFound)
+                    enemiesAfterPlayer.Add(playersInfo[i]);
+                else
+                    enemiesBeforePlayer.Add(playersInfo[i]);
+                
+            }
+
+            InitializeEnemiesBeforePlayer();
+            InitializeEnemiesAfterPlayer();
+            Debug.Log("Point 4");
+
+            #region InitializeEnemies
+
+            void InitializeEnemiesBeforePlayer()
+            {
+                int last = _playersOnScene.Count - 1;
+                
+                while (enemiesBeforePlayer.Count > 0)
+                {
+                    if (_playersOnScene[last].PlayerInfo != null)
+                    {
+                        if (_playersOnScene[last].PlayerInfo.user_id == playerInfo.user_id)
+                        {
+                            last--;
+                            continue;
+                        }
+                    }
+                    
+                    _playersOnScene[last].Initialize(enemiesBeforePlayer[^1].username, enemiesBeforePlayer[^1].user_id, enemiesBeforePlayer[^1].balance);
+
+                    enemiesBeforePlayer.Remove(enemiesBeforePlayer[^1]);
+
+                    last--;
+                }
+            }
+            
+            
+            void InitializeEnemiesAfterPlayer()
+            {
+                int first = 0;
+                
+                while (enemiesAfterPlayer.Count > 0)
+                {
+                    if (_playersOnScene[first].PlayerInfo != null)
+                    {
+                        if (_playersOnScene[first].PlayerInfo.user_id == playerInfo.user_id)
+                        {
+                            first++;
+                            continue;
+                        }
+                    }
+                
+                    _playersOnScene[first].Initialize(enemiesAfterPlayer[0].username, enemiesAfterPlayer[0].user_id, enemiesAfterPlayer[0].balance);
+
+                    enemiesAfterPlayer.Remove(enemiesAfterPlayer[0]);
+
+                    first++;
+                }
+            }
+
+            #endregion
+        }
+    
         
     public void DebugMethod(string methodName)
     {

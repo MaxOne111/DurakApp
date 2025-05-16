@@ -60,6 +60,7 @@ namespace Game.Max
 
         private PingReply _reply;
 
+        private JoinResponseLogic _joinResponse;
         private IAttackResponse _attackResponse;
         private DefenceResponseLogic _defenceResponse;
 
@@ -144,9 +145,11 @@ namespace Game.Max
 
         [Inject]
         private void ResponsesConstruct(
+            JoinResponseLogic joinResponse,
             IAttackResponse attackResponse,
             DefenceResponseLogic defenceResponse)
         {
+            _joinResponse = joinResponse;
             _attackResponse = attackResponse;
             _defenceResponse = defenceResponse;
         }
@@ -227,7 +230,7 @@ namespace Game.Max
             
             _responses = new Dictionary<ETurnMode, Action<string>>()
             {
-                { ETurnMode.Join, JoinResponse },
+                { ETurnMode.Join, _joinResponse.Invoke },
                 { ETurnMode.Ready, ReadyResponse },
                 { ETurnMode.StartDistribution, GameStartedResponse },
                 { ETurnMode.Role, RoleResponse },
@@ -386,24 +389,7 @@ namespace Game.Max
         }
         
         //----------Responses and messages----------
-        
-        private void JoinResponse(string response)
-        {
-            JoinResponse joinResponse = JsonConvert.DeserializeObject<JoinResponse>(response);
-            
-            if (joinResponse.players == null)
-            {
-                return;
-            }
 
-            _durakGameUI.ShowLobbyID(SceneMediator.Room.ID);
-            _durakGameUI.ShowLobbyBet(SceneMediator.Room.Bank);
-            
-            CreatePlayers(joinResponse.players.Length);
-            
-            InitializePlayers(joinResponse.players);
-        }
-        
         private void ReadyResponse(string response)
         {
             ReadyResponse readyResponse = JsonConvert.DeserializeObject<ReadyResponse>(response);
@@ -831,9 +817,9 @@ namespace Game.Max
             if (_player != null)
                 CleanLobby();
             
-            CreatePlayers(reconnectResponse.players.Length);
+            _gameLogicMethods.CreatePlayers(reconnectResponse.players.Length);
             
-            InitializePlayers(reconnectResponse.players);
+            _gameLogicMethods.InitializePlayers(reconnectResponse.players);
 
             ShowPlayersCardCount(reconnectResponse.players);
             
@@ -884,9 +870,9 @@ namespace Game.Max
         {
             WatchResponse watchResponse = JsonConvert.DeserializeObject<WatchResponse>(response);
 
-            CreatePlayers(watchResponse.players.Length, false);
+            _gameLogicMethods.CreatePlayers(watchResponse.players.Length, false);
 
-            InitializePlayers(watchResponse.players);
+            _gameLogicMethods.InitializePlayers(watchResponse.players);
             
             ShowPlayersCardCount(watchResponse.players);
 
@@ -1111,251 +1097,7 @@ namespace Game.Max
 
 
         //----------Game methods----------
-
-        private void CreatePlayers(int count, bool isPlayerIncluded = true)
-        {
-            if (_playersOnScene.Count > 0)
-                return;
-            
-            var positions = new EnemyPosition[count];
-            
-            positions[0] = _placesOnTable[0]; //Player place
-            
-            switch (count)
-            {
-                case 2: positions[1] = _placesOnTable[3];
-                    break;
-                case 3: positions[1] = _placesOnTable[2];
-                        positions[2] = _placesOnTable[4];
-                    break;
-                case 4: positions[1] = _placesOnTable[2];
-                        positions[2] = _placesOnTable[3];
-                        positions[3] = _placesOnTable[4];
-                    break;
-                case 5: positions[1] = _placesOnTable[1];
-                        positions[2] = _placesOnTable[2];
-                        positions[3] = _placesOnTable[4];
-                        positions[4] = _placesOnTable[5];
-                    break;
-                case 6: positions[1] = _placesOnTable[1];
-                        positions[2] = _placesOnTable[2];
-                        positions[3] = _placesOnTable[3];
-                        positions[4] = _placesOnTable[4];
-                        positions[5] = _placesOnTable[5];
-                    break;
-            }
-            
-            TestPlayer player = Instantiate(_playerPrefab, positions[0].Transform);
-            player.Initialize(_playerInfo.username, _playerInfo.user_id, _playerInfo.balance);
-            player.ShowDefaultBetHolder(_playerInfo.balance.ToString());
-            player.SetFlagPosition(EFlagPosition.Left);
-            player.SetCardsCountIndicatorEnabled(false);
-
-            //var country = new IpCountryProvider().GetCountry();
-            //player.SetCountry(country);
-            
-            _player = player;
-            
-            _playersOnScene.Add(player);
-
-            if (!isPlayerIncluded)
-                _player.gameObject.SetActive(false);
-
-            int startIndex;
-
-            if (isPlayerIncluded)
-                startIndex = 1;
-            else
-                startIndex = 0;
-
-            for (int i = startIndex; i < positions.Length; i++)
-            {
-                TestPlayer enemy = Instantiate(_playerPrefab, positions[i].Transform);
-                enemy.SetFlagPosition(EFlagPosition.Left);
-                enemy.HideBetHolder();
-                //enemy.SetFlagPosition(positions[i].FlagPosition);
-                //enemy.SetCountry(ECountry.Unknown);
-                //enemy.SetAvatar(enemyAvatar);
-                
-                _playersOnScene.Add(enemy);
-            }
-        }
         
-        private void InitializePlayers(PlayerInfo[] players)
-        {
-            List<PlayerInfo> playersInfo = new List<PlayerInfo>(players.Length);
-            List<PlayerInfo> enemiesAfterPlayer = new List<PlayerInfo>(players.Length);
-            List<PlayerInfo> enemiesBeforePlayer = new List<PlayerInfo>(players.Length);
-            
-            bool playerFound = false;
-
-            for (int i = 0; i < players.Length; i++)
-            {
-                if (players[i].user_id == 0)
-                    continue;
-                
-                playersInfo.Add(players[i]);
-            }
-            
-            for (int i = 0; i < playersInfo.Count; i++)
-            {
-                if (playersInfo[i].user_id == _playerInfo.user_id)
-                {
-                    playerFound = true;
-                    continue;
-                }
-                
-                if (playerFound)
-                    enemiesAfterPlayer.Add(playersInfo[i]);
-                else
-                    enemiesBeforePlayer.Add(playersInfo[i]);
-                
-            }
-            
-            InitializeEnemiesBeforePlayer();
-            InitializeEnemiesAfterPlayer();
-            
-
-            #region InitializeEnemies
-
-            void InitializeEnemiesBeforePlayer()
-            {
-                int last = _playersOnScene.Count - 1;
-                
-                while (enemiesBeforePlayer.Count > 0)
-                {
-                    if (_playersOnScene[last].PlayerInfo != null)
-                    {
-                        if (_playersOnScene[last].PlayerInfo.user_id == _playerInfo.user_id)
-                        {
-                            last--;
-                            continue;
-                        }
-                    }
-                    
-                    _playersOnScene[last].Initialize(enemiesBeforePlayer[^1].username, enemiesBeforePlayer[^1].user_id, enemiesBeforePlayer[^1].balance);
-
-                    enemiesBeforePlayer.Remove(enemiesBeforePlayer[^1]);
-
-                    last--;
-                }
-            }
-            
-            
-            void InitializeEnemiesAfterPlayer()
-            {
-                int first = 0;
-                
-                while (enemiesAfterPlayer.Count > 0)
-                {
-                    if (_playersOnScene[first].PlayerInfo != null)
-                    {
-                        if (_playersOnScene[first].PlayerInfo.user_id == _playerInfo.user_id)
-                        {
-                            first++;
-                            continue;
-                        }
-                    }
-                
-                    _playersOnScene[first].Initialize(enemiesAfterPlayer[0].username, enemiesAfterPlayer[0].user_id, enemiesAfterPlayer[0].balance);
-
-                    enemiesAfterPlayer.Remove(enemiesAfterPlayer[0]);
-
-                    first++;
-                }
-            }
-
-            #endregion
-        }
-        
-        private void InitializePlayers(PlayerCardInfo[] players)
-        {
-            List<PlayerInfo> playersInfo = new List<PlayerInfo>(players.Length);
-            List<PlayerInfo> enemiesAfterPlayer = new List<PlayerInfo>(players.Length);
-            List<PlayerInfo> enemiesBeforePlayer = new List<PlayerInfo>(players.Length);
-            
-            bool playerFound = false;
-
-            for (int i = 0; i < players.Length; i++)
-            {
-                if (players[i].user.user_id == 0)
-                    continue;
-                
-                playersInfo.Add(players[i].user);
-            }
-
-            for (int i = 0; i < playersInfo.Count; i++)
-            {
-                if (playersInfo[i].user_id == _playerInfo.user_id)
-                {
-                    playerFound = true;
-                    continue;
-                }
-                
-                if (playerFound)
-                    enemiesAfterPlayer.Add(playersInfo[i]);
-                else
-                    enemiesBeforePlayer.Add(playersInfo[i]);
-                
-            }
-
-            InitializeEnemiesBeforePlayer();
-            InitializeEnemiesAfterPlayer();
-            Debug.Log("Point 4");
-
-            #region InitializeEnemies
-
-            void InitializeEnemiesBeforePlayer()
-            {
-                int last = _playersOnScene.Count - 1;
-                
-                while (enemiesBeforePlayer.Count > 0)
-                {
-                    if (_playersOnScene[last].PlayerInfo != null)
-                    {
-                        if (_playersOnScene[last].PlayerInfo.user_id == _playerInfo.user_id)
-                        {
-                            last--;
-                            continue;
-                        }
-                    }
-                    
-                    _playersOnScene[last].Initialize(enemiesBeforePlayer[^1].username, enemiesBeforePlayer[^1].user_id, enemiesBeforePlayer[^1].balance);
-
-                    enemiesBeforePlayer.Remove(enemiesBeforePlayer[^1]);
-
-                    last--;
-                }
-            }
-            
-            
-            void InitializeEnemiesAfterPlayer()
-            {
-                int first = 0;
-                
-                while (enemiesAfterPlayer.Count > 0)
-                {
-                    if (_playersOnScene[first].PlayerInfo != null)
-                    {
-                        if (_playersOnScene[first].PlayerInfo.user_id == _playerInfo.user_id)
-                        {
-                            first++;
-                            continue;
-                        }
-                    }
-                
-                    _playersOnScene[first].Initialize(enemiesAfterPlayer[0].username, enemiesAfterPlayer[0].user_id, enemiesAfterPlayer[0].balance);
-
-                    enemiesAfterPlayer.Remove(enemiesAfterPlayer[0]);
-
-                    first++;
-                }
-            }
-
-            #endregion
-        }
-        
-
         private void SetCardScale(TestCard card, Vector3 scale)
         {
             card.transform.DOScale(scale, 0.5f)

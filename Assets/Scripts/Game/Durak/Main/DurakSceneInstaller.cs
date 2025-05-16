@@ -99,6 +99,7 @@ public class DurakSceneInstaller : MonoInstaller
 
     private void InstallResponses()
     {
+        Container.Bind<JoinResponseLogic>().ToSelf().AsSingle();
         Container.Bind<IAttackResponse>().To<AttackResponseLogic>().AsSingle();
         Container.Bind<DefenceResponseLogic>().ToSelf().AsSingle();
     }
