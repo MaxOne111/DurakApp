@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using DG.Tweening;
 using Game.Durak;
+using Game.Durak.Core;
 using Game.Durak.Enums;
 using Game.Durak.Network.Responses;
 using Newtonsoft.Json.Linq;
@@ -45,6 +46,8 @@ public class GameLogicMethods
     private TestPlayer _playerPrefab;
 
     private EnemyPosition[] _placesOnTable;
+    
+    private ResponseTextMessageRepository _responseTextMessageRepository;
 
     private Transform p0;
     private Transform p1;
@@ -70,7 +73,8 @@ public class GameLogicMethods
         List<TestCard> cardsOnScene,
         GameObject deck,
         TestPlayer playerPrefab,
-        EnemyPosition[] placesOnTable
+        EnemyPosition[] placesOnTable,
+        ResponseTextMessageRepository messageRepository
     )
     {
         _trumpPosition = trumpPosition;
@@ -86,6 +90,7 @@ public class GameLogicMethods
         _deck = deck;
         _playerPrefab = playerPrefab;
         _placesOnTable = placesOnTable;
+        _responseTextMessageRepository = messageRepository;
     }
 
     public void SpawnSleeve(GameStartedResponse startedResponse, float duration, int delay)
@@ -549,6 +554,49 @@ public class GameLogicMethods
 
             #endregion
         }
+      
+      
+      public void ShowActionMessage(PlayerInfo user, ETurnMode mode, bool sendToServer = false)
+      {
+          Debug.Log($"ShowActionMessage: username {user.username}, mode: {mode}");
+            
+          var player = DurakHelper.GetPlayer(_playersOnScene, user);
+
+          switch (mode)
+          {
+              case ETurnMode.Beat:
+                  if (player.PlayerInfo.user_id == _player.PlayerInfo.user_id)
+                  {
+                      _durakGameUI.DisableButton(_durakGameUI.Beat);
+                  }
+                  break;
+                
+              case ETurnMode.Pass:
+                  if (player.PlayerInfo.user_id == _player.PlayerInfo.user_id)
+                  {
+                      _durakGameUI.DisableButton(_durakGameUI.Pass);
+                  }
+                  break;
+                
+              case ETurnMode.Take:
+                  if (player.PlayerInfo.user_id == _player.PlayerInfo.user_id)
+                  {
+                      _durakGameUI.DisableButton(_durakGameUI.Take);
+                  }
+                  break;
+          }
+
+          var hasMessage = _responseTextMessageRepository.TryGetMessage(mode, out var message);
+          if (hasMessage)
+          {
+              player.ShowActionMessage(message);
+
+              if (sendToServer)
+              {
+                 // SendTextMessage($"ActionMessage:{mode}");
+              }
+          }
+      }
     
         
     public void DebugMethod(string methodName)

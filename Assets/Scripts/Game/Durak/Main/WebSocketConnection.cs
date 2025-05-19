@@ -61,6 +61,7 @@ namespace Game.Max
         private PingReply _reply;
 
         private JoinResponseLogic _joinResponse;
+        private ReadyResponseLogic _readyResponse;
         private IAttackResponse _attackResponse;
         private DefenceResponseLogic _defenceResponse;
 
@@ -146,10 +147,12 @@ namespace Game.Max
         [Inject]
         private void ResponsesConstruct(
             JoinResponseLogic joinResponse,
+            ReadyResponseLogic readyResponse,
             IAttackResponse attackResponse,
             DefenceResponseLogic defenceResponse)
         {
             _joinResponse = joinResponse;
+            _readyResponse = readyResponse;
             _attackResponse = attackResponse;
             _defenceResponse = defenceResponse;
         }
@@ -231,7 +234,7 @@ namespace Game.Max
             _responses = new Dictionary<ETurnMode, Action<string>>()
             {
                 { ETurnMode.Join, _joinResponse.Invoke },
-                { ETurnMode.Ready, ReadyResponse },
+                { ETurnMode.Ready, _readyResponse.Invoke },
                 { ETurnMode.StartDistribution, GameStartedResponse },
                 { ETurnMode.Role, RoleResponse },
                 { ETurnMode.Attack, _attackResponse.Invoke },
