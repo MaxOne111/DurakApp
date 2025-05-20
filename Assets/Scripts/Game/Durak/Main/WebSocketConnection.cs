@@ -62,6 +62,7 @@ namespace Game.Max
 
         private JoinResponseLogic _joinResponse;
         private ReadyResponseLogic _readyResponse;
+        private GameStartResponseLogic _gameStartResponseLogic;
         private IAttackResponse _attackResponse;
         private DefenceResponseLogic _defenceResponse;
 
@@ -148,11 +149,13 @@ namespace Game.Max
         private void ResponsesConstruct(
             JoinResponseLogic joinResponse,
             ReadyResponseLogic readyResponse,
+            GameStartResponseLogic gameStartResponseLogic,
             IAttackResponse attackResponse,
             DefenceResponseLogic defenceResponse)
         {
             _joinResponse = joinResponse;
             _readyResponse = readyResponse;
+            _gameStartResponseLogic = gameStartResponseLogic;
             _attackResponse = attackResponse;
             _defenceResponse = defenceResponse;
         }
@@ -235,7 +238,7 @@ namespace Game.Max
             {
                 { ETurnMode.Join, _joinResponse.Invoke },
                 { ETurnMode.Ready, _readyResponse.Invoke },
-                { ETurnMode.StartDistribution, GameStartedResponse },
+                { ETurnMode.StartDistribution, _gameStartResponseLogic.Invoke },
                 { ETurnMode.Role, RoleResponse },
                 { ETurnMode.Attack, _attackResponse.Invoke },
                 { ETurnMode.Defence, _defenceResponse.Invoke },
@@ -392,38 +395,6 @@ namespace Game.Max
         }
         
         //----------Responses and messages----------
-
-        private void ReadyResponse(string response)
-        {
-            ReadyResponse readyResponse = JsonConvert.DeserializeObject<ReadyResponse>(response);
-
-            for (int i = 0; i < readyResponse.ready_players.Length; i++)
-            {
-                var player = DurakHelper.GetPlayer(_playersOnScene, readyResponse.ready_players[i]);
-
-                ShowActionMessage(player.PlayerInfo, ETurnMode.Ready);
-                player.DisableFrames();
-                player.StopTimer();
-            }
-
-            if (readyResponse.ready_players.Length == _playersOnScene.Count)
-            {
-                Debug.Log("Start game");
-            }
-        }
-
-        private void GameStartedResponse(string response)
-        {
-            GameStartedResponse startedResponse = JsonConvert.DeserializeObject<GameStartedResponse>(response);
-
-            _gameLogicMethods.SpawnSleeve(startedResponse, 0.5f, 100);
-            
-            ShowPlayersCardCount(startedResponse?.players);
-            
-            _deck.SetActive(true);
-                
-            _trumpPosition.gameObject.SetActive(true);
-        }
 
         private void RoleResponse(string response)
         {
