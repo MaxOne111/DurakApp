@@ -102,6 +102,7 @@ public class DurakSceneInstaller : MonoInstaller
         Container.Bind<JoinResponseLogic>().ToSelf().AsSingle();
         Container.Bind<ReadyResponseLogic>().ToSelf().AsSingle();
         Container.Bind<GameStartResponseLogic>().ToSelf().AsSingle();
+        Container.Bind<RoleResponseLogic>().ToSelf().AsSingle();
         Container.Bind<IAttackResponse>().To<AttackResponseLogic>().AsSingle();
         Container.Bind<DefenceResponseLogic>().ToSelf().AsSingle();
     }

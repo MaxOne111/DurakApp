@@ -597,6 +597,28 @@ public class GameLogicMethods
               }
           }
       }
+      
+      
+      public void SetRoleFrames(PlayerInfo[] users)
+      {
+          for (int i = 0; i < _playersOnScene.Count; i++)
+          {
+              if (_playersOnScene[i].PlayerInfo.user_id == SceneMediator.UserGameData.user_id)
+                  continue;
+                
+              _playersOnScene[i].SetRole(EPlayerRole.Waiting);
+              _playersOnScene[i].ShowRoleFrame();
+          }
+
+          for (int i = 0; i < users.Length; i++)
+          {
+              var player = DurakHelper.GetPlayer(_playersOnScene, users[i]);
+                
+              player.SetRole(users[i].Turn);
+              player.ShowRoleFrame();
+          }
+                
+      }
     
         
     public void DebugMethod(string methodName)

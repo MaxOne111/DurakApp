@@ -17,10 +17,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using WebSocketSharp;
 using Zenject;
-using Random = UnityEngine.Random;
 
 namespace Game.Max
 {
@@ -29,16 +27,10 @@ namespace Game.Max
         private GameObject _deck;
         
         private Transform _playerSleeve;
-        
-        private Transform _trumpPosition;
 
-        private EnemyPosition[] _placesOnTable;
-        
         private Transform _slotContainer;
         
         private TestSlot _slotPrefab;
-        
-        private TestPlayer _playerPrefab;
 
         private CardsConfig _cardsConfig;
 
@@ -63,6 +55,7 @@ namespace Game.Max
         private JoinResponseLogic _joinResponse;
         private ReadyResponseLogic _readyResponse;
         private GameStartResponseLogic _gameStartResponseLogic;
+        private RoleResponseLogic _roleResponseLogic;
         private IAttackResponse _attackResponse;
         private DefenceResponseLogic _defenceResponse;
 
@@ -104,24 +97,18 @@ namespace Game.Max
 
         [Inject]
         private void SceneConstruct(
-            [Inject(Id = SceneInstallerIdentifiers.TrumpPosition)]
-            Transform trumpPosition,
             GameObject deck,
-            EnemyPosition[] placeOnTable,
             TestSlot slotPrefab)
         {
-            _trumpPosition = trumpPosition;
             _deck = deck;
-            _placesOnTable = placeOnTable;
             _slotPrefab = slotPrefab;
         }
 
         [Inject]
-        private void PlayerConstruct(TestPlayer playerPrefab,
+        private void PlayerConstruct(
             [Inject(Id = SceneInstallerIdentifiers.PlayerSleevePosition)]
             Transform playerSleevePosition)
         {
-            _playerPrefab = playerPrefab;
             _playerSleeve = playerSleevePosition;
         }
         
@@ -150,12 +137,14 @@ namespace Game.Max
             JoinResponseLogic joinResponse,
             ReadyResponseLogic readyResponse,
             GameStartResponseLogic gameStartResponseLogic,
+            RoleResponseLogic roleResponseLogic,
             IAttackResponse attackResponse,
             DefenceResponseLogic defenceResponse)
         {
             _joinResponse = joinResponse;
             _readyResponse = readyResponse;
             _gameStartResponseLogic = gameStartResponseLogic;
+            _roleResponseLogic = roleResponseLogic;
             _attackResponse = attackResponse;
             _defenceResponse = defenceResponse;
         }
@@ -239,7 +228,7 @@ namespace Game.Max
                 { ETurnMode.Join, _joinResponse.Invoke },
                 { ETurnMode.Ready, _readyResponse.Invoke },
                 { ETurnMode.StartDistribution, _gameStartResponseLogic.Invoke },
-                { ETurnMode.Role, RoleResponse },
+                { ETurnMode.Role, _roleResponseLogic.Invoke },
                 { ETurnMode.Attack, _attackResponse.Invoke },
                 { ETurnMode.Defence, _defenceResponse.Invoke },
                 { ETurnMode.Take, TakeResponse },
