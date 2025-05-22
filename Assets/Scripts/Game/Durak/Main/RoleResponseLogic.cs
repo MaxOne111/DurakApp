@@ -4,7 +4,7 @@ using Zenject;
 
 public class RoleResponseLogic : IResponse
 {
-    private TestPlayer _player;
+    private TestPlayer _player; // bind ?
 
     private GameLogicMethods _gameLogicMethods;
 

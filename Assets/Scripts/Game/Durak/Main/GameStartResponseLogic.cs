@@ -27,10 +27,6 @@ public class GameStartResponseLogic : IResponse
     
     public void Invoke(string response)
     {
-        Debug.Log(_deck.transform.position);
-        
-        return;
-        
         GameStartedResponse startedResponse = JsonConvert.DeserializeObject<GameStartedResponse>(response);
 
         _gameLogicMethods.SpawnSleeve(startedResponse, 0.5f, 100);

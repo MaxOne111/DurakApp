@@ -56,6 +56,7 @@ namespace Game.Max
         private ReadyResponseLogic _readyResponse;
         private GameStartResponseLogic _gameStartResponseLogic;
         private RoleResponseLogic _roleResponseLogic;
+        private BeatResponseLogic _beatResponseLogic;
         private IAttackResponse _attackResponse;
         private DefenceResponseLogic _defenceResponse;
 
@@ -74,10 +75,10 @@ namespace Game.Max
         [SerializeField] private CheckConnection checkConnectionOriginal;
 
         [Header("BezierCurve")]
-        [SerializeField] private Transform p0;
-        [SerializeField] private Transform p1;
-        [SerializeField] private Transform p2;
-        [SerializeField] private Transform p3;
+        [SerializeField] private Transform p0; //
+        [SerializeField] private Transform p1; //
+        [SerializeField] private Transform p2; //
+        [SerializeField] private Transform p3; // not used, need to bind
         
         private TestPlayer _activePlayer;
         private TestPlayer _player;
@@ -138,13 +139,14 @@ namespace Game.Max
             ReadyResponseLogic readyResponse,
             GameStartResponseLogic gameStartResponseLogic,
             RoleResponseLogic roleResponseLogic,
+            BeatResponseLogic beatResponseLogic,
             IAttackResponse attackResponse,
             DefenceResponseLogic defenceResponse)
         {
             _joinResponse = joinResponse;
             _readyResponse = readyResponse;
             _gameStartResponseLogic = gameStartResponseLogic;
-            _roleResponseLogic = roleResponseLogic;
+            _beatResponseLogic = beatResponseLogic;
             _attackResponse = attackResponse;
             _defenceResponse = defenceResponse;
         }
@@ -232,7 +234,7 @@ namespace Game.Max
                 { ETurnMode.Attack, _attackResponse.Invoke },
                 { ETurnMode.Defence, _defenceResponse.Invoke },
                 { ETurnMode.Take, TakeResponse },
-                { ETurnMode.Beat, BeatResponse },
+                { ETurnMode.Beat, _beatResponseLogic.Invoke },
                 { ETurnMode.Info, InfoResponse },
                 { ETurnMode.Error, ErrorResponse },
                 { ETurnMode.Status, StatusResponse },
@@ -385,21 +387,6 @@ namespace Game.Max
         
         //----------Responses and messages----------
 
-        private void RoleResponse(string response)
-        {
-            TurnResponse turnResponse = JsonConvert.DeserializeObject<TurnResponse>(response);
-
-            _player.SetRole(turnResponse.Turn);
-            _player.ShowRoleFrame();
-            
-            SetRoleFrames(turnResponse.Users);
-            
-            _durakGameUI.ChangeRoleImage(turnResponse.Turn);
-            
-            _durakGameUI.DisableButtons();
-
-        }
-        
         private void BeatResponse(string response)
         {
             BeatResponse beatResponse = JsonConvert.DeserializeObject<BeatResponse>(response);
