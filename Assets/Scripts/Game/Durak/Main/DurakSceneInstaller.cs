@@ -40,13 +40,16 @@ public class DurakSceneInstaller : MonoInstaller
     
 
     private List<TestPlayer> _playersOnScene = new List<TestPlayer>();
-    
+
+    private List<TestCard> _cardsOnScene = new List<TestCard>();
+
 
     public override void InstallBindings()
     {
         InstallScene();
         InstallPlayer();
         InstallPlayerList();
+        InstallCardList();
         InstallServices();
         InstallResponses();
     }
@@ -55,57 +58,115 @@ public class DurakSceneInstaller : MonoInstaller
     {
         Container.BindInstance(playerPrefab);
 
-        Container.Bind<Transform>().WithId(SceneInstallerIdentifiers.PlayerSleevePosition).FromInstance(playerSleeve)
+        Container.Bind<Transform>()
+            .WithId(SceneInstallerIdentifiers.PlayerSleevePosition)
+            .FromInstance(playerSleeve)
             .AsCached();
     }
     
     private void InstallPlayerList()
     {
-        Container.Bind<List<TestPlayer>>().WithId(SceneInstallerIdentifiers.PlayersOnScene).FromInstance(_playersOnScene).AsSingle();
+        Container.Bind<List<TestPlayer>>()
+            .WithId(SceneInstallerIdentifiers.PlayersOnScene)
+            .FromInstance(_playersOnScene).AsSingle();
+    }
+
+    private void InstallCardList()
+    {
+        Container.Bind<List<TestCard>>()
+            .FromInstance(_cardsOnScene)
+            .AsSingle();
     }
     
     private void InstallScene()
     {
-        Container.Bind<Transform>().WithId(SceneInstallerIdentifiers.TrumpPosition).FromInstance(trumpPosition)
+        Container.Bind<Transform>()
+            .WithId(SceneInstallerIdentifiers.TrumpPosition)
+            .FromInstance(trumpPosition)
             .AsCached();
-        Container.Bind<Transform>().WithId(SceneInstallerIdentifiers.BeatPosition).FromInstance(beatPosition)
-            .AsCached();
-
-        Container.Bind<GameObject>().FromInstance(deck).AsSingle();
-
-        Container.Bind<EnemyPosition[]>().FromInstance(placesOnTable).AsSingle();
-
-        Container.Bind<Transform>().WithId(SceneInstallerIdentifiers.SlotContainer).FromInstance(slotContainer)
+        
+        Container.Bind<Transform>()
+            .WithId(SceneInstallerIdentifiers.BeatPosition)
+            .FromInstance(beatPosition)
             .AsCached();
 
-        Container.Bind<Image>().FromInstance(trumpImage).AsSingle();
+        Container.Bind<GameObject>()
+            .FromInstance(deck)
+            .AsSingle();
 
-        Container.BindInstance(slotPrefab);
+        Container.Bind<EnemyPosition[]>()
+            .FromInstance(placesOnTable)
+            .AsSingle();
+
+        Container.Bind<Transform>()
+            .WithId(SceneInstallerIdentifiers.SlotContainer)
+            .FromInstance(slotContainer)
+            .AsCached();
+
+        Container.Bind<Image>()
+            .FromInstance(trumpImage)
+            .AsSingle();
+
+        Container.Bind<TestSlot>()
+            .FromInstance(slotPrefab)
+            .AsSingle();
     }
 
     private void InstallServices()
     {
-        Container.Bind<DurakGameUI>().FromComponentInHierarchy().AsSingle();
+        Container.Bind<DurakGameUI>()
+            .FromComponentInHierarchy()
+            .AsSingle();
 
-        Container.Bind<DurakGameSounds>().FromComponentInHierarchy().AsSingle();
+        Container.Bind<DurakGameSounds>()
+            .FromComponentInHierarchy()
+            .AsSingle();
 
-        Container.Bind<ResponseTextMessageRepository>().FromInstance(responseTextMessageRepository)
+        Container.Bind<ResponseTextMessageRepository>()
+            .FromInstance(responseTextMessageRepository)
             .AsCached();
 
-        Container.Bind<CardsConfig>().FromInstance(cardsConfig).AsSingle();
+        Container.Bind<CardsConfig>()
+            .FromInstance(cardsConfig)
+            .AsSingle();
 
-        Container.Bind<GameLogicMethods>().ToSelf().AsSingle();
+        Container.Bind<GameLogicMethods>()
+            .ToSelf()
+            .AsSingle();
     }
 
     private void InstallResponses()
     {
-        Container.Bind<JoinResponseLogic>().ToSelf().AsSingle();
-        Container.Bind<ReadyResponseLogic>().ToSelf().AsSingle();
-        Container.Bind<GameStartResponseLogic>().ToSelf().AsSingle();
-        Container.Bind<RoleResponseLogic>().ToSelf().AsSingle();
-        Container.Bind<BeatResponseLogic>().ToSelf().AsSingle();
-        Container.Bind<IAttackResponse>().To<AttackResponseLogic>().AsSingle();
-        Container.Bind<DefenceResponseLogic>().ToSelf().AsSingle();
+        Container.Bind<JoinResponseLogic>()
+            .ToSelf()
+            .AsSingle();
+        
+        Container.Bind<ReadyResponseLogic>()
+            .ToSelf()
+            .AsSingle();
+        Container.Bind<GameStartResponseLogic>()
+            .ToSelf()
+            .AsSingle();
+        
+        Container.Bind<RoleResponseLogic>()
+            .ToSelf()
+            .AsSingle();
+        
+        Container.Bind<BeatResponseLogic>()
+            .ToSelf()
+            .AsSingle();
+        
+        Container.Bind<TakeResponseLogic>()
+            .ToSelf()
+            .AsSingle();
+        
+        Container.Bind<IAttackResponse>()
+            .To<AttackResponseLogic>()
+            .AsSingle();
+        
+        Container.Bind<DefenceResponseLogic>()
+            .ToSelf()
+            .AsSingle();
     }
 }
 

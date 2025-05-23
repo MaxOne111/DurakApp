@@ -57,6 +57,7 @@ namespace Game.Max
         private GameStartResponseLogic _gameStartResponseLogic;
         private RoleResponseLogic _roleResponseLogic;
         private BeatResponseLogic _beatResponseLogic;
+        private TakeResponseLogic _takeResponseLogic;
         private IAttackResponse _attackResponse;
         private DefenceResponseLogic _defenceResponse;
 
@@ -140,6 +141,7 @@ namespace Game.Max
             GameStartResponseLogic gameStartResponseLogic,
             RoleResponseLogic roleResponseLogic,
             BeatResponseLogic beatResponseLogic,
+            TakeResponseLogic takeResponseLogic,
             IAttackResponse attackResponse,
             DefenceResponseLogic defenceResponse)
         {
@@ -147,6 +149,7 @@ namespace Game.Max
             _readyResponse = readyResponse;
             _gameStartResponseLogic = gameStartResponseLogic;
             _beatResponseLogic = beatResponseLogic;
+            _takeResponseLogic = takeResponseLogic;
             _attackResponse = attackResponse;
             _defenceResponse = defenceResponse;
         }
@@ -233,7 +236,7 @@ namespace Game.Max
                 { ETurnMode.Role, _roleResponseLogic.Invoke },
                 { ETurnMode.Attack, _attackResponse.Invoke },
                 { ETurnMode.Defence, _defenceResponse.Invoke },
-                { ETurnMode.Take, TakeResponse },
+                { ETurnMode.Take, _takeResponseLogic.Invoke },
                 { ETurnMode.Beat, _beatResponseLogic.Invoke },
                 { ETurnMode.Info, InfoResponse },
                 { ETurnMode.Error, ErrorResponse },
@@ -386,83 +389,6 @@ namespace Game.Max
         }
         
         //----------Responses and messages----------
-
-        private void BeatResponse(string response)
-        {
-            BeatResponse beatResponse = JsonConvert.DeserializeObject<BeatResponse>(response);
-            
-            if (beatResponse.status != EGameStatus.In_Game)
-                return;
-
-            if (beatResponse.cards != null)
-            {
-                for (int i = 0; i < beatResponse.cards.Length; i++)
-                {
-                    if (_player.HaveCard(beatResponse.cards[i]))
-                        continue;
-
-                    TestCard newCard = _gameLogicMethods.SpawnCard(beatResponse.cards[i], _deck.transform.position, Quaternion.identity,
-                        _playerSleeve);
-
-                    _player.AddCard(newCard);
-
-                    _gameSounds.PlayGetCard();
-                }
-            }
-
-            if (beatResponse.players != null)
-            {
-                ShowPlayersCardCount(beatResponse.players);
-            }
-
-            Debug.Log($"Refreshing cards amount");
-
-            _gameLogicMethods.MoveCardsToSleeve(_player.SleeveCount, 0.5f, 50, null);
-
-            _player.UnlockSleeve();
-            
-        }
-        
-        private void TakeResponse(string response)
-        {
-            TakeResponse takeResponse = JsonConvert.DeserializeObject<TakeResponse>(response);
-
-            if (takeResponse.status != EGameStatus.In_Game)
-                return;
-
-            for (int i = 0; i < takeResponse.cards.Length; i++)
-            {
-                if (_player.HaveCard(takeResponse.cards[i]))
-                    continue;
-
-                TestCard newCard;
-
-                if (DurakHelper.IsPlayer(_player, takeResponse.taker))
-                {
-                    newCard = DurakHelper.GetCard(_cardsOnScene, takeResponse.cards[i]);
-                    
-                    newCard.transform.SetParent(_playerSleeve);
-                    newCard.transform.DORotate(Vector3.zero, 0.25f).SetLink(newCard.gameObject);
-
-                    _durakGameUI.DisableButton(_durakGameUI.Take);
-                }
-                else
-                    newCard = _gameLogicMethods.SpawnCard(takeResponse.cards[i], _deck.transform.position, Quaternion.identity,
-                        _playerSleeve);
-
-                _player.AddCard(newCard);
-            }
-
-            ShowPlayersCardCount(takeResponse.players);
-            
-            Debug.Log($"Refreshing cards amount");
-            
-            _gameSounds.PlayTakeCard();
-
-            _gameLogicMethods.MoveCardsToSleeve(_player.SleeveCount, 0.5f, 0);
-            
-            _player.UnlockSleeve();
-        }
         
         private void ChatResponse(string response)
         {
