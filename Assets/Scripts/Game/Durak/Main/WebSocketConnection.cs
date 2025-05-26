@@ -24,10 +24,6 @@ namespace Game.Max
 {
     public class WebSocketConnection : MonoBehaviour
     {
-        private GameObject _deck;
-        
-        private Transform _playerSleeve;
-
         private Transform _slotContainer;
         
         private TestSlot _slotPrefab;
@@ -54,12 +50,13 @@ namespace Game.Max
 
         private JoinResponseLogic _joinResponse;
         private ReadyResponseLogic _readyResponse;
-        private GameStartResponseLogic _gameStartResponseLogic;
-        private RoleResponseLogic _roleResponseLogic;
-        private BeatResponseLogic _beatResponseLogic;
-        private TakeResponseLogic _takeResponseLogic;
+        private GameStartResponseLogic _gameStartResponse;
+        private RoleResponseLogic _roleResponse;
+        private BeatResponseLogic _beatResponse;
+        private TakeResponseLogic _takeResponse;
         private IAttackResponse _attackResponse;
         private DefenceResponseLogic _defenceResponse;
+        private ChatResponseLogic _chatResponse;
 
         private static event Action<CardInfo, GameObject> _playerAttackMove; 
         private static event Action<CardInfo, TestSlot> _playerDefenceMove; 
@@ -102,17 +99,9 @@ namespace Game.Max
             GameObject deck,
             TestSlot slotPrefab)
         {
-            _deck = deck;
             _slotPrefab = slotPrefab;
         }
-
-        [Inject]
-        private void PlayerConstruct(
-            [Inject(Id = SceneInstallerIdentifiers.PlayerSleevePosition)]
-            Transform playerSleevePosition)
-        {
-            _playerSleeve = playerSleevePosition;
-        }
+        
         
         [Inject]
         private void PlayerListConstruct(List<TestPlayer> players)
@@ -138,20 +127,22 @@ namespace Game.Max
         private void ResponsesConstruct(
             JoinResponseLogic joinResponse,
             ReadyResponseLogic readyResponse,
-            GameStartResponseLogic gameStartResponseLogic,
-            RoleResponseLogic roleResponseLogic,
-            BeatResponseLogic beatResponseLogic,
-            TakeResponseLogic takeResponseLogic,
+            GameStartResponseLogic gameStartResponse,
+            RoleResponseLogic roleResponse,
+            BeatResponseLogic beatResponse,
+            TakeResponseLogic takeResponse,
             IAttackResponse attackResponse,
-            DefenceResponseLogic defenceResponse)
+            DefenceResponseLogic defenceResponse,
+            ChatResponseLogic chatResponse)
         {
             _joinResponse = joinResponse;
             _readyResponse = readyResponse;
-            _gameStartResponseLogic = gameStartResponseLogic;
-            _beatResponseLogic = beatResponseLogic;
-            _takeResponseLogic = takeResponseLogic;
+            _gameStartResponse = gameStartResponse;
+            _beatResponse = beatResponse;
+            _takeResponse = takeResponse;
             _attackResponse = attackResponse;
             _defenceResponse = defenceResponse;
+            _chatResponse = chatResponse;
         }
         
         private void OnEnable()
@@ -232,16 +223,16 @@ namespace Game.Max
             {
                 { ETurnMode.Join, _joinResponse.Invoke },
                 { ETurnMode.Ready, _readyResponse.Invoke },
-                { ETurnMode.StartDistribution, _gameStartResponseLogic.Invoke },
-                { ETurnMode.Role, _roleResponseLogic.Invoke },
+                { ETurnMode.StartDistribution, _gameStartResponse.Invoke },
+                { ETurnMode.Role, _roleResponse.Invoke },
                 { ETurnMode.Attack, _attackResponse.Invoke },
                 { ETurnMode.Defence, _defenceResponse.Invoke },
-                { ETurnMode.Take, _takeResponseLogic.Invoke },
-                { ETurnMode.Beat, _beatResponseLogic.Invoke },
+                { ETurnMode.Take, _takeResponse.Invoke },
+                { ETurnMode.Beat, _beatResponse.Invoke },
                 { ETurnMode.Info, InfoResponse },
                 { ETurnMode.Error, ErrorResponse },
                 { ETurnMode.Status, StatusResponse },
-                { ETurnMode.Text, ChatResponse },
+                { ETurnMode.Text, _chatResponse.Invoke },
                 { ETurnMode.TimerGame, TimerDataResponse },
                 { ETurnMode.TimerReady, TimerDataResponse },
                 { ETurnMode.Cancelled, TimerFinishResponse },
@@ -389,37 +380,7 @@ namespace Game.Max
         }
         
         //----------Responses and messages----------
-        
-        private void ChatResponse(string response)
-        {
-            var chatResponse = JsonConvert.DeserializeObject<ChatMessage>(response);
 
-            var prefix = "ActionMessage:";
-            if (chatResponse.Text.StartsWith(prefix))
-            {
-                var mode = Enum.Parse<ETurnMode>(new string(chatResponse.Text.Skip(prefix.Length).ToArray()));
-                ShowActionMessage(chatResponse.Sender, mode, false);
-                return;
-            }
-
-            var sender = DurakHelper.GetPlayer(_playersOnScene, chatResponse.Sender);
-
-            switch (chatResponse.Type)
-            {
-                case EChatMessageType.Message:
-                    var backgroundColor = Color.white;
-                    var textColor = Color.black;
-                    
-                    var message = new TextMessage(backgroundColor, textColor, chatResponse.Text, 0);
-                    sender.ShowTextMessage(message);
-                    break;
-                
-                case EChatMessageType.Emoji:
-                    sender.ShowEmoji(chatResponse.Text);
-                    break;
-            }
-        }
-        
         private void ErrorResponse(string response)
         {
             ErrorResponse errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(response);
