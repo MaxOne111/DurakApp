@@ -57,6 +57,7 @@ namespace Game.Max
         private IAttackResponse _attackResponse;
         private DefenceResponseLogic _defenceResponse;
         private ChatResponseLogic _chatResponse;
+        private ErrorResponseLogic _errorResponse;
 
         private static event Action<CardInfo, GameObject> _playerAttackMove; 
         private static event Action<CardInfo, TestSlot> _playerDefenceMove; 
@@ -133,7 +134,8 @@ namespace Game.Max
             TakeResponseLogic takeResponse,
             IAttackResponse attackResponse,
             DefenceResponseLogic defenceResponse,
-            ChatResponseLogic chatResponse)
+            ChatResponseLogic chatResponse,
+            ErrorResponseLogic errorResponse)
         {
             _joinResponse = joinResponse;
             _readyResponse = readyResponse;
@@ -143,6 +145,7 @@ namespace Game.Max
             _attackResponse = attackResponse;
             _defenceResponse = defenceResponse;
             _chatResponse = chatResponse;
+            _errorResponse = errorResponse;
         }
         
         private void OnEnable()
@@ -230,7 +233,7 @@ namespace Game.Max
                 { ETurnMode.Take, _takeResponse.Invoke },
                 { ETurnMode.Beat, _beatResponse.Invoke },
                 { ETurnMode.Info, InfoResponse },
-                { ETurnMode.Error, ErrorResponse },
+                { ETurnMode.Error, _errorResponse.Invoke },
                 { ETurnMode.Status, StatusResponse },
                 { ETurnMode.Text, _chatResponse.Invoke },
                 { ETurnMode.TimerGame, TimerDataResponse },
@@ -381,45 +384,6 @@ namespace Game.Max
         
         //----------Responses and messages----------
 
-        private void ErrorResponse(string response)
-        {
-            ErrorResponse errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(response);
-
-            switch (errorResponse.Error)
-            {
-                case ELogicError.WeakCard:
-                    break;
-                case ELogicError.MissingTableCard:
-                    //TODO
-                    break;
-                case ELogicError.MissingPlayerCard:
-                    //TODO
-                    break;
-                case ELogicError.OpenSlot:
-                    //TODO
-                    break;
-                case ELogicError.NotInit:
-                    //TODO
-                    break;
-                case ELogicError.NotEnemy:
-                    //TODO
-                    break;
-                case ELogicError.WaitInit:
-                    //TODO
-                    break;
-                case ELogicError.SlotClosed:
-                    //TODO
-                    break;
-                    
-                case ELogicError.TournamentRoomNotFound:
-                    SceneMediator.Room = errorResponse.next_game;
-                    break;
-            }
-
-            if (_player)
-                _player.ReturnSleeveToPlayer();
-        }
-        
         private void InfoResponse(string response)
         {
             InfoResponse infoResponse = JsonConvert.DeserializeObject<InfoResponse>(response);

@@ -171,6 +171,10 @@ public class DurakSceneInstaller : MonoInstaller
         Container.Bind<ChatResponseLogic>()
             .ToSelf()
             .AsSingle();
+        
+        Container.Bind<ErrorResponseLogic>()
+            .ToSelf()
+            .AsSingle();
     }
 }
 
