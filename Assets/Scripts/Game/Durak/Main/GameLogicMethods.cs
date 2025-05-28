@@ -8,6 +8,7 @@ using Game.Durak.Enums;
 using Game.Durak.Network.Responses;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Zenject;
 using Object = UnityEngine.Object;
@@ -619,7 +620,19 @@ public class GameLogicMethods
           }
                 
       }
+      
+    public void Quit()
+    {
+          //StartCoroutine(DurakHelper.Loading(SceneManager.LoadSceneAsync("Menu")));
+    }
     
+    
+    public void Vibrate()
+    {
+#if !UNITY_WEBGL
+        Handheld.Vibrate();
+#endif        
+    }
         
     public void DebugMethod(string methodName)
     {

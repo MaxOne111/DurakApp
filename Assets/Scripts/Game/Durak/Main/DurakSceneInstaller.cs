@@ -175,6 +175,10 @@ public class DurakSceneInstaller : MonoInstaller
         Container.Bind<ErrorResponseLogic>()
             .ToSelf()
             .AsSingle();
+
+        Container.Bind<InfoResponseLogic>()
+            .ToSelf()
+            .AsSingle();
     }
 }
 

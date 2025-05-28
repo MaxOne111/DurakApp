@@ -58,6 +58,7 @@ namespace Game.Max
         private DefenceResponseLogic _defenceResponse;
         private ChatResponseLogic _chatResponse;
         private ErrorResponseLogic _errorResponse;
+        private InfoResponseLogic _infoResponse;
 
         private static event Action<CardInfo, GameObject> _playerAttackMove; 
         private static event Action<CardInfo, TestSlot> _playerDefenceMove; 
@@ -135,7 +136,8 @@ namespace Game.Max
             IAttackResponse attackResponse,
             DefenceResponseLogic defenceResponse,
             ChatResponseLogic chatResponse,
-            ErrorResponseLogic errorResponse)
+            ErrorResponseLogic errorResponse,
+            InfoResponseLogic infoResponse)
         {
             _joinResponse = joinResponse;
             _readyResponse = readyResponse;
@@ -146,6 +148,7 @@ namespace Game.Max
             _defenceResponse = defenceResponse;
             _chatResponse = chatResponse;
             _errorResponse = errorResponse;
+            _infoResponse = infoResponse;
         }
         
         private void OnEnable()
@@ -232,7 +235,7 @@ namespace Game.Max
                 { ETurnMode.Defence, _defenceResponse.Invoke },
                 { ETurnMode.Take, _takeResponse.Invoke },
                 { ETurnMode.Beat, _beatResponse.Invoke },
-                { ETurnMode.Info, InfoResponse },
+                { ETurnMode.Info, _infoResponse.Invoke },
                 { ETurnMode.Error, _errorResponse.Invoke },
                 { ETurnMode.Status, StatusResponse },
                 { ETurnMode.Text, _chatResponse.Invoke },
@@ -383,164 +386,7 @@ namespace Game.Max
         }
         
         //----------Responses and messages----------
-
-        private void InfoResponse(string response)
-        {
-            InfoResponse infoResponse = JsonConvert.DeserializeObject<InfoResponse>(response);
-
-            TestPlayer player;
-            
-            switch (infoResponse?.Info)
-            {
-                case ELogicInfo.DeckSize:
-                    _gameLogicMethods.CheckDeck(int.Parse(infoResponse.value));
-                    
-                    break;
-
-                case ELogicInfo.CanPass:
-
-                    break;
-                
-                case ELogicInfo.DefenderTake:
-                    ShowActionMessage(infoResponse.user, infoResponse.action);
-
-                    break;
-                
-                case ELogicInfo.DefenderTook:
-                    Debug.Log($"Defender took the cards: {infoResponse.user.username}");
-                    
-                    if (!DurakHelper.IsPlayer(_player, infoResponse.user))
-                        _gameLogicMethods.MoveCardsToEnemy(infoResponse.user);
-                    
-                    break;
-                
-                case ELogicInfo.AttackerSkipped:
-                    ShowActionMessage(infoResponse.user, infoResponse.action);
-                    Debug.Log($"AttackerSkipped: user: {infoResponse.user}, mode: {infoResponse.action}");
-                    break;
-                
-                case ELogicInfo.InitSkipped:
-                    ShowActionMessage(infoResponse.user, infoResponse.action);
-                    Debug.Log($"InitSkipped: user: {infoResponse.user}, mode: {infoResponse.action}");
-                    break;
-                
-                case ELogicInfo.YourTurn:
-                    if (infoResponse.action == ETurnMode.Beat)
-                        _durakGameUI.SwitchButton(_durakGameUI.Beat);
-                    
-                    else if (infoResponse.action == ETurnMode.Pass)
-                        _durakGameUI.SwitchButton(_durakGameUI.Pass);
-                    break;
-                
-                case ELogicInfo.PlayerWon:
-                    player = DurakHelper.GetPlayer(_playersOnScene, infoResponse.user);
-                    player.DarkenAvatar();
-                    player.DisableFrames();
-
-                    if (DurakHelper.IsPlayer(_player, player))
-                    {
-                        _gameSounds.PlayVictory();
-                        _durakGameUI.DisableButtons();
-                    }
-                    
-                    break;
-                
-                case ELogicInfo.PlayerLose:
-                    player = DurakHelper.GetPlayer(_playersOnScene, infoResponse.user);
-                    player.DisableFrames();
-
-                    if (DurakHelper.IsPlayer(_player, player))
-                    {
-                        _gameSounds.PlayDefeat();
-                        _durakGameUI.DisableButtons();
-                    }
-
-                    break;
-                
-                case ELogicInfo.NewRound:
-
-                    if (infoResponse.action is ETurnMode.Beat)
-                        _gameLogicMethods.MoveCardsToBeat();
-
-                    for (int i = 0; i < _playersOnScene.Count; i++)
-                        _playersOnScene[i].HideActionMessage();
-                    
-                    _gameLogicMethods.CleanDeck();
-                    break;
-                
-                case ELogicInfo.UserLogOut:
-                    _isReady = false;
-
-                    _durakGameUI.DisableButton(_durakGameUI.Ready);
-                    
-                    player = DurakHelper.GetPlayer(_playersOnScene, infoResponse.user);
-
-                    if (!_inGame)
-                    {
-                        for (int i = 0; i < _playersOnScene.Count; i++)
-                            _playersOnScene[i].StopTimer();
-                    }
-                    
-                    if (player.PlayerInfo.user_id == _playerInfo.user_id)
-                    {
-                        Quit();
-                        break;
-                    }
-                    
-                    player.DarkenAvatar();
-                    player.ShowDisconnectMessage();
-
-                    break;
-                
-                case ELogicInfo.UserReconnect:
-                    player = DurakHelper.GetPlayer(_playersOnScene, infoResponse.user);
-
-                    if (DurakHelper.IsPlayer(_player, player))
-                        break;
-                    
-                    player.LightenAvatar();
-                    player.HideDisconnectMessage();
-
-                    break;
-                
-                case ELogicInfo.ActivePlayer:
-                    _activePlayer = DurakHelper.GetPlayer(_playersOnScene, infoResponse.user);
-                    _activePlayer.EnableAttackFrame();
-
-                    _activePlayer.HideActionMessage();
-
-                    if (DurakHelper.IsPlayer(_player, _activePlayer))
-                        Vibrate();
-
-                    break;
-                
-                case ELogicInfo.MinTrumpCard:
-
-                    player = DurakHelper.GetPlayer(_playersOnScene, infoResponse.user);
-
-                    TestCard card = _cardsConfig.GetCard(infoResponse.user.min_trump_card);
-                    
-                    _durakGameUI.SetTrumpSuit(card.CardInfo.suit);
-                    
-                    if (DurakHelper.IsPlayer(_player, player))
-                        break;
-                    
-                    if(player)
-                        player.ShowMinTrump(card);
-                    
-                    break;
-                
-                case ELogicInfo.ActiveReady:
-                    
-                    Debug.Log(_playersOnScene.Count);
-                    
-                    for (int i = 0; i < _playersOnScene.Count; i++)
-                        _playersOnScene[i].EnableAttackFrame();
-                    
-                    break;
-            }
-        }
-
+        
         private void StatusResponse(string response)
         {
             StatusResponse statusResponse = JsonConvert.DeserializeObject<StatusResponse>(response);
