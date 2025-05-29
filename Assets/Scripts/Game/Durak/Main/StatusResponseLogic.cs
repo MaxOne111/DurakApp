@@ -20,9 +20,6 @@ public class StatusResponseLogic : IResponse
     
     public void Invoke(string response)
     {
-        Debug.Log(_durakGameUI);
-        return;
-        
         StatusResponse statusResponse = JsonConvert.DeserializeObject<StatusResponse>(response);
 
         switch (statusResponse.Status)

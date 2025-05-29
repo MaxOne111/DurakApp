@@ -59,6 +59,7 @@ namespace Game.Max
         private ChatResponseLogic _chatResponse;
         private ErrorResponseLogic _errorResponse;
         private InfoResponseLogic _infoResponse;
+        private StatusResponseLogic _statusResponse;
 
         private static event Action<CardInfo, GameObject> _playerAttackMove; 
         private static event Action<CardInfo, TestSlot> _playerDefenceMove; 
@@ -137,7 +138,8 @@ namespace Game.Max
             DefenceResponseLogic defenceResponse,
             ChatResponseLogic chatResponse,
             ErrorResponseLogic errorResponse,
-            InfoResponseLogic infoResponse)
+            InfoResponseLogic infoResponse,
+            StatusResponseLogic statusResponse)
         {
             _joinResponse = joinResponse;
             _readyResponse = readyResponse;
@@ -149,6 +151,7 @@ namespace Game.Max
             _chatResponse = chatResponse;
             _errorResponse = errorResponse;
             _infoResponse = infoResponse;
+            _statusResponse = statusResponse;
         }
         
         private void OnEnable()
@@ -237,7 +240,7 @@ namespace Game.Max
                 { ETurnMode.Beat, _beatResponse.Invoke },
                 { ETurnMode.Info, _infoResponse.Invoke },
                 { ETurnMode.Error, _errorResponse.Invoke },
-                { ETurnMode.Status, StatusResponse },
+                { ETurnMode.Status, _statusResponse.Invoke },
                 { ETurnMode.Text, _chatResponse.Invoke },
                 { ETurnMode.TimerGame, TimerDataResponse },
                 { ETurnMode.TimerReady, TimerDataResponse },
@@ -386,24 +389,6 @@ namespace Game.Max
         }
         
         //----------Responses and messages----------
-        
-        private void StatusResponse(string response)
-        {
-            StatusResponse statusResponse = JsonConvert.DeserializeObject<StatusResponse>(response);
-
-            switch (statusResponse.Status)
-            {
-                case EGameStatus.In_Game:
-                    break;
-                
-                case EGameStatus.GameInReady:
-
-                    if (!_isReady)
-                        _durakGameUI.SwitchButton(_durakGameUI.Ready);
-                    
-                    break;
-            }
-        }
 
         private void FinishResponse(string response)
         {

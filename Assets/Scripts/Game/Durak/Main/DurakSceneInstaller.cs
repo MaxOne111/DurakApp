@@ -138,26 +138,20 @@ public class DurakSceneInstaller : MonoInstaller
     private void InstallResponses()
     {
         Container.Bind<JoinResponseLogic>()
-            .ToSelf()
             .AsSingle();
         
         Container.Bind<ReadyResponseLogic>()
-            .ToSelf()
             .AsSingle();
         Container.Bind<GameStartResponseLogic>()
-            .ToSelf()
             .AsSingle();
         
         Container.Bind<RoleResponseLogic>()
-            .ToSelf()
             .AsSingle();
         
         Container.Bind<BeatResponseLogic>()
-            .ToSelf()
             .AsSingle();
         
         Container.Bind<TakeResponseLogic>()
-            .ToSelf()
             .AsSingle();
         
         Container.Bind<IAttackResponse>()
@@ -165,19 +159,18 @@ public class DurakSceneInstaller : MonoInstaller
             .AsSingle();
         
         Container.Bind<DefenceResponseLogic>()
-            .ToSelf()
             .AsSingle();
         
         Container.Bind<ChatResponseLogic>()
-            .ToSelf()
             .AsSingle();
         
         Container.Bind<ErrorResponseLogic>()
-            .ToSelf()
             .AsSingle();
 
         Container.Bind<InfoResponseLogic>()
-            .ToSelf()
+            .AsSingle();
+        
+        Container.Bind<StatusResponseLogic>()
             .AsSingle();
     }
 }
