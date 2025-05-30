@@ -60,6 +60,7 @@ namespace Game.Max
         private ErrorResponseLogic _errorResponse;
         private InfoResponseLogic _infoResponse;
         private StatusResponseLogic _statusResponse;
+        private TimerDataResponseLogic _timerDataResponse;
 
         private static event Action<CardInfo, GameObject> _playerAttackMove; 
         private static event Action<CardInfo, TestSlot> _playerDefenceMove; 
@@ -139,7 +140,8 @@ namespace Game.Max
             ChatResponseLogic chatResponse,
             ErrorResponseLogic errorResponse,
             InfoResponseLogic infoResponse,
-            StatusResponseLogic statusResponse)
+            StatusResponseLogic statusResponse,
+            TimerDataResponseLogic timerDataResponse)
         {
             _joinResponse = joinResponse;
             _readyResponse = readyResponse;
@@ -152,6 +154,7 @@ namespace Game.Max
             _errorResponse = errorResponse;
             _infoResponse = infoResponse;
             _statusResponse = statusResponse;
+            _timerDataResponse = timerDataResponse;
         }
         
         private void OnEnable()
@@ -242,8 +245,8 @@ namespace Game.Max
                 { ETurnMode.Error, _errorResponse.Invoke },
                 { ETurnMode.Status, _statusResponse.Invoke },
                 { ETurnMode.Text, _chatResponse.Invoke },
-                { ETurnMode.TimerGame, TimerDataResponse },
-                { ETurnMode.TimerReady, TimerDataResponse },
+                { ETurnMode.TimerGame, _timerDataResponse.Invoke },
+                { ETurnMode.TimerReady, _timerDataResponse.Invoke },
                 { ETurnMode.Cancelled, TimerFinishResponse },
                 { ETurnMode.Expired, TimerFinishResponse },
                 { ETurnMode.Finish, FinishResponse },
@@ -544,35 +547,6 @@ namespace Game.Max
             
         }
         
-        
-        private void TimerDataResponse(string response)
-        {
-            TimerDataResponse timerDataResponse = JsonConvert.DeserializeObject<TimerDataResponse>(response);
-            
-            DateTime currentTime = DateTime.Parse(timerDataResponse.timer.now);
-            DateTime finishTime = DateTime.Parse(timerDataResponse.timer.expiration_time);
-            
-            int seconds = finishTime.Subtract(currentTime).Seconds;
-            int minutes = finishTime.Subtract(currentTime).Minutes;
-
-            int timerDuration = seconds + minutes * 60;
-
-            switch (timerDataResponse.mode)
-            {
-                case ETurnMode.TimerGame:
-                    _activePlayer.StopTimer();
-                    _activePlayer.StartTimer(timerDuration);
-                    
-                    break;
-                
-                case ETurnMode.TimerReady:
-                    Debug.Log(_playersOnScene.Count);
-                    for (int i = 0; i < _playersOnScene.Count; i++)
-                        _playersOnScene[i].StartTimer(timerDuration);
-
-                    break;
-            }
-        }
         
         private void TimerFinishResponse(string response)
         {

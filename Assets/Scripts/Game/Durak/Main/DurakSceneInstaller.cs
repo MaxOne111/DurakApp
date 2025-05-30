@@ -172,6 +172,9 @@ public class DurakSceneInstaller : MonoInstaller
         
         Container.Bind<StatusResponseLogic>()
             .AsSingle();
+        
+        Container.Bind<TimerDataResponseLogic>()
+            .AsSingle();
     }
 }
 
